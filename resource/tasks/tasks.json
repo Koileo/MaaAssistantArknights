@@ -3795,6 +3795,7 @@
     },
     "BattleStartPlotSkip": {
         "baseTask": "SkipThePreBattlePlot",
+        "template": "SkipThePreBattlePlot.png",
         "next": ["BattleStartPlotSkipConfirm", "BattleStartPlotSkip"]
     },
     "BattleStartPlotSkipConfirm": {
@@ -3804,6 +3805,7 @@
     },
     "BattleStartPlotSkipConfirmMask": {
         "baseTask": "SkipThePreBattlePlotConfirm",
+        "template": "SkipThePreBattlePlotConfirm.png",
         "next": ["BattleStartPlotWait"]
     },
     "BattleStartPlotWait": {
@@ -4816,6 +4818,7 @@
     },
     "Copilot@SkipThePreBattlePlotConfirmMask": {
         "baseTask": "SkipThePreBattlePlotConfirm",
+        "template": "SkipThePreBattlePlotConfirm.png",
         "next": ["Copilot@WaitUntilEndOfAction"]
     },
     "Copilot@WaitUntilEndOfAction-Retry": {
@@ -4840,6 +4843,7 @@
     },
     "Copilot@SkipThePreBattlePlot-Retry": {
         "baseTask": "SkipThePreBattlePlot",
+        "template": "SkipThePreBattlePlot.png",
         "next": ["Copilot@SkipThePreBattlePlotConfirm-Retry", "Copilot@SkipThePreBattlePlot-Retry"]
     },
     "Copilot@SkipThePreBattlePlotConfirm-Retry": {
@@ -4849,10 +4853,12 @@
     },
     "Copilot@SkipThePreBattlePlotConfirmMask-Retry": {
         "baseTask": "SkipThePreBattlePlotConfirm",
+        "template": "SkipThePreBattlePlotConfirm.png",
         "next": ["Copilot@WaitUntilEndOfAction-Retry"]
     },
     "Copilot@EndOfAction-Retry": {
         "baseTask": "Copilot@EndOfAction",
+        "template": "EndOfAction.png",
         "next": [
             "Copilot@StageDrops-Retry-Stars-3",
             "Copilot@StageDrops-Retry-Stars-Adverse",
@@ -4865,14 +4871,17 @@
     },
     "Copilot@StageDrops-Retry-Stars-3": {
         "baseTask": "StageDrops-Stars-3",
+        "template": "StageDrops-Stars-3.png",
         "postDelay": 2000
     },
     "Copilot@StageDrops-Retry-Stars-Adverse": {
         "baseTask": "StageDrops-Stars-Adverse",
+        "template": "StageDrops-Stars-Adverse.png",
         "postDelay": 2000
     },
     "Copilot@StageDrops-Retry-Stars-2": {
         "baseTask": "StageDrops-Stars-2",
+        "template": "StageDrops-Stars-2.png",
         "postDelay": 2000
     },
     "Copilot@EndOfAction": {
