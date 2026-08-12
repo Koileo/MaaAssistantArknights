@@ -16,6 +16,7 @@
 asst::CopilotTask::CopilotTask(const AsstCallback& callback, Assistant* inst) :
     InterfaceTask(callback, inst, TaskType),
     m_multi_copilot_plugin_ptr(std::make_shared<MultiCopilotTaskPlugin>(callback, inst, TaskType)),
+    m_multi_copilot_settlement_ptr(std::make_shared<MultiCopilotSettlementTask>(callback, inst, TaskType)),
     m_formation_task_ptr(std::make_shared<BattleFormationTask>(callback, inst, TaskType)),
     m_battle_task_ptr(std::make_shared<BattleProcessTask>(callback, inst, TaskType)),
     m_stop_task_ptr(std::make_shared<ProcessTask>(callback, inst, TaskType))
@@ -49,8 +50,12 @@ asst::CopilotTask::CopilotTask(const AsstCallback& callback, Assistant* inst) :
 
     m_subtasks.emplace_back(m_battle_task_ptr)->set_retry_times(0);
 
+    m_multi_copilot_settlement_ptr->set_enable(false);
+    m_multi_copilot_settlement_ptr->set_multi_copilot_task_ptr(m_multi_copilot_plugin_ptr);
     m_stop_task_ptr->set_enable(false);
     m_subtasks.emplace_back(m_stop_task_ptr);
+    m_subtasks.emplace_back(m_multi_copilot_settlement_ptr);
+    m_multi_copilot_plugin_ptr->set_cycle_tasks(m_subtasks);
 }
 
 bool asst::CopilotTask::set_params(const json::value& params)
@@ -116,7 +121,7 @@ bool asst::CopilotTask::set_params(const json::value& params)
             configs_cvt.emplace_back(std::move(config_cvt));
         }
 
-        size_t count = configs_cvt.size();
+        size_t count = configs_cvt.size() * 2;
         // 追加任务
         m_subtasks.reserve(m_subtasks.size() * count);
         // 保存原始大小
@@ -179,8 +184,7 @@ bool asst::CopilotTask::set_params(const json::value& params)
          else {
              m_stop_task_ptr->set_tasks({ "Copilot@WaitUntilEndOfAction" });
          }*/
-        m_stop_task_ptr->set_tasks({ "Copilot@WaitUntilEndOfAction" }); // 带三星检查
-        m_stop_task_ptr->set_enable(true);
+        m_multi_copilot_settlement_ptr->set_enable(true);
     }
     else if (loop_times > 1) {
         m_stop_task_ptr->set_tasks({ "ClickCornerUntilStartButton" });

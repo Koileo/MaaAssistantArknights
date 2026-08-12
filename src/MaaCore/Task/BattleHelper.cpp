@@ -614,8 +614,21 @@ bool asst::BattleHelper::check_skip_plot_button(const cv::Mat& reusable)
     bool ret = battle_plot_analyzer.analyze().has_value();
     if (ret) {
         ProcessTask(this_task(), { "SkipThePreBattlePlot" }).run();
+        return true;
     }
-    return ret;
+
+    // The Mac client can render the skip control differently from the bundled
+    // template. Use OCR as a fallback, then reuse the normal confirmation flow.
+    OCRer skip_ocr(image);
+    skip_ocr.set_task_info("SkipThePreBattlePlotOCR");
+    auto result = skip_ocr.analyze();
+    if (!result || result->empty()) {
+        return false;
+    }
+
+    m_inst_helper.ctrler()->click(result->front().rect);
+    ProcessTask(this_task(), { "SkipThePreBattlePlotConfirm" }).set_retry_times(3).run();
+    return true;
 }
 
 bool asst::BattleHelper::check_avatar_dialog(const cv::Mat& reusable)

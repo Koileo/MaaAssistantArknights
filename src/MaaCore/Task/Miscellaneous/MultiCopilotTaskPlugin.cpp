@@ -17,13 +17,28 @@
 bool asst::MultiCopilotTaskPlugin::_run()
 {
     LogTraceFunction;
-    if (m_copilot_configs.size() < (size_t)m_index_current) {
+    if (!has_pending_config()) {
+        Log.info("MultiCopilot all stages completed");
+        return true;
+    }
+    if (m_copilot_configs.size() <= static_cast<size_t>(m_index_current)) {
         LogError << __FUNCTION__ << "configs size:" << m_copilot_configs.size() << ", current index:" << m_index_current
                  << ", out of range";
         return false;
     }
 
-    const auto& config = m_copilot_configs[m_index_current++];
+    // A failed stage must be retried immediately, even if another queued stage
+    // is also visible on a branched map.
+    const auto selected = m_current_retry > 0 ? static_cast<size_t>(m_index_current) : select_visible_config();
+    if (selected != static_cast<size_t>(m_index_current)) {
+        Log.info(
+            "MultiCopilot select visible stage",
+            m_copilot_configs[selected].nav_name,
+            "instead of",
+            m_copilot_configs[m_index_current].nav_name);
+        std::swap(m_copilot_configs[m_index_current], m_copilot_configs[selected]);
+    }
+    const auto& config = m_copilot_configs[m_index_current];
 
     std::string file_name;
     if (!Copilot.load(config.copilot_file)) {
@@ -63,6 +78,103 @@ bool asst::MultiCopilotTaskPlugin::_run()
     }
 
     return ret;
+}
+
+void asst::MultiCopilotTaskPlugin::set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks)
+{
+    m_cycle_tasks.assign(tasks.begin(), tasks.end());
+}
+
+bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
+{
+    if (!has_pending_config()) {
+        return true;
+    }
+
+    const auto& config = m_copilot_configs[m_index_current];
+    if (three_stars) {
+        Log.info("MultiCopilot stage completed with three stars", config.nav_name);
+        ++m_index_current;
+        m_current_retry = 0;
+        if (!has_pending_config()) {
+            for (const auto& task : m_cycle_tasks) {
+                if (const auto ptr = task.lock()) {
+                    ptr->set_enable(false);
+                }
+            }
+        }
+        return true;
+    }
+
+    if (m_current_retry == 0) {
+        Log.warn("MultiCopilot stage did not receive three stars; retry once", config.nav_name);
+        ++m_current_retry;
+        return true;
+    }
+
+    Log.error("MultiCopilot stage did not receive three stars after retry; stop queue", config.nav_name);
+    return false;
+}
+
+bool asst::MultiCopilotSettlementTask::_run()
+{
+    if (!m_multi_copilot_task_ptr || !m_multi_copilot_task_ptr->has_pending_config()) {
+        return true;
+    }
+
+    ProcessTask settlement(*this, { "Copilot@WaitUntilEndOfAction-Retry" });
+    settlement.set_retry_times(0);
+    if (!settlement.run()) {
+        return false;
+    }
+
+    const auto& result = settlement.get_last_task_name();
+    const bool three_stars = result == "Copilot@StageDrops-Retry-Stars-3" ||
+                             result == "Copilot@StageDrops-Retry-Stars-Adverse";
+    const bool recognized_result = three_stars || result == "Copilot@StageDrops-Retry-Stars-2";
+    if (!recognized_result) {
+        Log.error("MultiCopilot settlement result is unknown", result);
+        return false;
+    }
+
+    if (!ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run()) {
+        return false;
+    }
+    return m_multi_copilot_task_ptr->complete_current_battle(three_stars);
+}
+
+size_t asst::MultiCopilotTaskPlugin::select_visible_config()
+{
+    const auto current = static_cast<size_t>(m_index_current);
+    if (current + 1 >= m_copilot_configs.size()) {
+        return current;
+    }
+
+    const auto image = ctrler()->get_image();
+    if (is_stage_detail_opened(image)) {
+        return current;
+    }
+
+    const auto& task = Task.get<OcrTaskInfo>(m_copilot_configs[current].nav_name + "@ClickStageName");
+    std::tuple<int, int, int> threshold_low {
+        task->special_params[0],
+        task->special_params[1],
+        task->special_params[2],
+    };
+    std::tuple<int, int, int> threshold_high {
+        task->special_params[3],
+        task->special_params[4],
+        task->special_params[5],
+    };
+    const auto stages = find_stage(image, threshold_low, threshold_high);
+
+    for (size_t i = current; i < m_copilot_configs.size(); ++i) {
+        const auto& target = m_copilot_configs[i].nav_name;
+        if (std::ranges::any_of(stages, [&](const OcrPack::Result& result) { return result.text == target; })) {
+            return i;
+        }
+    }
+    return current;
 }
 
 bool asst::MultiCopilotTaskPlugin::navigate_to_stage(const std::string& stage_name)
@@ -226,4 +338,3 @@ bool asst::MultiCopilotTaskPlugin::confirm_stage_name(const cv::Mat& image, cons
     LogError << __FUNCTION__ << "confirm stage name failed after retrying 3 times, stage name:" << stage_name;
     return false;
 }
-

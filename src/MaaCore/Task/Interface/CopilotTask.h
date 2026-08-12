@@ -7,6 +7,7 @@
 namespace asst
 {
 class MultiCopilotTaskPlugin;
+class MultiCopilotSettlementTask;
 class BattleProcessTask;
 class BattleFormationTask;
 class ProcessTask;
@@ -40,6 +41,7 @@ private:
     std::optional<std::filesystem::path> parse_copilot_filename(const std::string& name);
 
     std::shared_ptr<MultiCopilotTaskPlugin> m_multi_copilot_plugin_ptr = nullptr;
+    std::shared_ptr<MultiCopilotSettlementTask> m_multi_copilot_settlement_ptr = nullptr;
     std::shared_ptr<ProcessTask> m_medicine_task_ptr = nullptr;
     std::shared_ptr<BattleFormationTask> m_formation_task_ptr = nullptr;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;

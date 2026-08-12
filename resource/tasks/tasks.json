@@ -3774,13 +3774,42 @@
         "action": "ClickSelf",
         "roi": [989, 318, 232, 374],
         "postDelay": 4000,
-        "next": ["BattleOfficiallyBegin", "SkipThePreBattlePlot", "Stop"]
+        "next": ["BattleOfficiallyBegin", "BattleStartPlotSkipOCR", "BattleStartPlotSkip", "Stop"]
     },
     "SkipThePreBattlePlot": {
         "action": "ClickSelf",
         "roi": [1096, 0, 182, 131],
         "next": ["SkipThePreBattlePlotConfirm", "SkipThePreBattlePlot"],
         "maskRange": [100, 255]
+    },
+    "SkipThePreBattlePlotOCR": {
+        "algorithm": "OcrDetect",
+        "text": ["跳过", "Skip"],
+        "roi": [1020, 0, 260, 180],
+        "fullMatch": false,
+        "action": "ClickSelf"
+    },
+    "BattleStartPlotSkipOCR": {
+        "baseTask": "SkipThePreBattlePlotOCR",
+        "next": ["BattleStartPlotSkipConfirm", "BattleStartPlotSkipConfirmMask", "BattleStartPlotWait"]
+    },
+    "BattleStartPlotSkip": {
+        "baseTask": "SkipThePreBattlePlot",
+        "next": ["BattleStartPlotSkipConfirm", "BattleStartPlotSkip"]
+    },
+    "BattleStartPlotSkipConfirm": {
+        "baseTask": "SkipThePreBattlePlotConfirm",
+        "template": "SkipThePreBattlePlotConfirm.png",
+        "next": ["BattleStartPlotWait"]
+    },
+    "BattleStartPlotSkipConfirmMask": {
+        "baseTask": "SkipThePreBattlePlotConfirm",
+        "next": ["BattleStartPlotWait"]
+    },
+    "BattleStartPlotWait": {
+        "algorithm": "JustReturn",
+        "maxTimes": 50,
+        "next": ["BattleOfficiallyBegin", "BattleStartPlotSkipOCR", "BattleStartPlotSkip", "BattleStartPlotWait"]
     },
     "SkipBattlePlot": {
         "baseTask": "SkipThePreBattlePlot",
@@ -4752,6 +4781,7 @@
         "maxTimes": 50,
         "exceededNext": ["Copilot@EndOfAction"],
         "next": [
+            "Copilot@SkipThePreBattlePlotOCR",
             "Copilot@SkipThePreBattlePlot",
             "Copilot@EndOfAction",
             "Copilot@EndOfAction-Sandbox",
@@ -4764,6 +4794,7 @@
         "maxTimes": 50,
         "exceededNext": ["Copilot@EndOfAction-Bypass"],
         "next": [
+            "Copilot@SkipThePreBattlePlotOCR",
             "Copilot@SkipThePreBattlePlot",
             "Copilot@EndOfAction-Bypass",
             "Copilot@EndOfAction-Sandbox",
@@ -4774,6 +4805,75 @@
     "Copilot@SkipThePreBattlePlotConfirm": {
         "template": "SkipThePreBattlePlotConfirm.png",
         "next": ["Copilot@WaitUntilEndOfAction"]
+    },
+    "Copilot@SkipThePreBattlePlotOCR": {
+        "baseTask": "SkipThePreBattlePlotOCR",
+        "next": [
+            "Copilot@SkipThePreBattlePlotConfirm",
+            "Copilot@SkipThePreBattlePlotConfirmMask",
+            "Copilot@WaitUntilEndOfAction"
+        ]
+    },
+    "Copilot@SkipThePreBattlePlotConfirmMask": {
+        "baseTask": "SkipThePreBattlePlotConfirm",
+        "next": ["Copilot@WaitUntilEndOfAction"]
+    },
+    "Copilot@WaitUntilEndOfAction-Retry": {
+        "algorithm": "JustReturn",
+        "maxTimes": 50,
+        "exceededNext": ["Copilot@EndOfAction-Retry"],
+        "next": [
+            "Copilot@SkipThePreBattlePlotOCR-Retry",
+            "Copilot@SkipThePreBattlePlot-Retry",
+            "Copilot@EndOfAction-Retry",
+            "Copilot@FightMissionFailed-Retry",
+            "Copilot@WaitUntilEndOfAction-Retry"
+        ]
+    },
+    "Copilot@SkipThePreBattlePlotOCR-Retry": {
+        "baseTask": "SkipThePreBattlePlotOCR",
+        "next": [
+            "Copilot@SkipThePreBattlePlotConfirm-Retry",
+            "Copilot@SkipThePreBattlePlotConfirmMask-Retry",
+            "Copilot@WaitUntilEndOfAction-Retry"
+        ]
+    },
+    "Copilot@SkipThePreBattlePlot-Retry": {
+        "baseTask": "SkipThePreBattlePlot",
+        "next": ["Copilot@SkipThePreBattlePlotConfirm-Retry", "Copilot@SkipThePreBattlePlot-Retry"]
+    },
+    "Copilot@SkipThePreBattlePlotConfirm-Retry": {
+        "baseTask": "SkipThePreBattlePlotConfirm",
+        "template": "SkipThePreBattlePlotConfirm.png",
+        "next": ["Copilot@WaitUntilEndOfAction-Retry"]
+    },
+    "Copilot@SkipThePreBattlePlotConfirmMask-Retry": {
+        "baseTask": "SkipThePreBattlePlotConfirm",
+        "next": ["Copilot@WaitUntilEndOfAction-Retry"]
+    },
+    "Copilot@EndOfAction-Retry": {
+        "baseTask": "Copilot@EndOfAction",
+        "next": [
+            "Copilot@StageDrops-Retry-Stars-3",
+            "Copilot@StageDrops-Retry-Stars-Adverse",
+            "Copilot@StageDrops-Retry-Stars-2"
+        ]
+    },
+    "Copilot@FightMissionFailed-Retry": {
+        "baseTask": "Copilot@FightMissionFailed",
+        "next": ["Copilot@EndOfAction-Retry"]
+    },
+    "Copilot@StageDrops-Retry-Stars-3": {
+        "baseTask": "StageDrops-Stars-3",
+        "postDelay": 2000
+    },
+    "Copilot@StageDrops-Retry-Stars-Adverse": {
+        "baseTask": "StageDrops-Stars-Adverse",
+        "postDelay": 2000
+    },
+    "Copilot@StageDrops-Retry-Stars-2": {
+        "baseTask": "StageDrops-Stars-2",
+        "postDelay": 2000
     },
     "Copilot@EndOfAction": {
         "template": "EndOfAction.png",

@@ -9,6 +9,7 @@
 namespace asst
 {
 class BattleProcessTask;
+class ProcessTask;
 
 class MultiCopilotTaskPlugin : public AbstractTask
 {
@@ -28,9 +29,14 @@ public:
     void set_multi_copilot_config(std::vector<MultiCopilotConfig> config) { m_copilot_configs = std::move(config); }
 
     void set_battle_task_ptr(const std::shared_ptr<BattleProcessTask>& ptr) { m_battle_task_ptr = ptr; }
+    void set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks);
+
+    bool has_pending_config() const { return m_index_current < static_cast<int>(m_copilot_configs.size()); }
+    bool complete_current_battle(bool three_stars);
 
 private:
     virtual bool _run() override;
+    size_t select_visible_config();
     bool navigate_to_stage(const std::string& stage_name);
     bool enter_stage(const Rect rect, const std::string& stage_name);
     OCRer::ResultsVec find_stage(
@@ -42,7 +48,26 @@ private:
 
     std::vector<MultiCopilotConfig> m_copilot_configs;
     int m_index_current = 0; // 当前执行的索引
+    int m_current_retry = 0;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;
+    std::vector<std::weak_ptr<AbstractTask>> m_cycle_tasks;
     int m_max_retry = 20;
+};
+
+class MultiCopilotSettlementTask : public AbstractTask
+{
+public:
+    using AbstractTask::AbstractTask;
+    virtual ~MultiCopilotSettlementTask() override = default;
+
+    void set_multi_copilot_task_ptr(const std::shared_ptr<MultiCopilotTaskPlugin>& ptr)
+    {
+        m_multi_copilot_task_ptr = ptr;
+    }
+
+private:
+    virtual bool _run() override;
+
+    std::shared_ptr<MultiCopilotTaskPlugin> m_multi_copilot_task_ptr = nullptr;
 };
 }
