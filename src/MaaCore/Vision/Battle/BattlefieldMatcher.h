@@ -55,6 +55,7 @@ public:
     void set_total_kills_prompt(int prompt);
     void set_image_prev(const cv::Mat& image);
     ResultOpt analyze() const;
+    bool hp_lost_analyze() const;
 
 protected:
     bool hp_flag_analyze() const;

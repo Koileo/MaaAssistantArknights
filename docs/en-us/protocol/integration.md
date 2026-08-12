@@ -760,6 +760,9 @@ Each object contains:
   ::: field name="use_sanity_potion" type="boolean" optional default="false"  
   Whether to use sanity potions when sanity is insufficient.  
   :::  
+  ::: field name="retry_on_leak" type="boolean" optional default="false"  
+  In multi-job mode, exits the current battle when objective HP decreases and retries once. Do not enable for strategies that intentionally leak enemies.  
+  :::  
   ::: field name="formation" type="boolean" optional default="false"  
   Whether to enable auto formation.  
   :::  
@@ -810,6 +813,7 @@ For more details about auto-combat JSON, please refer to [Combat Operation Proto
    "filename": "copilot/1-7.json",
    "loop_times": 2,
    "use_sanity_potion": false,
+   "retry_on_leak": false,
    "formation": true,
    "formation_index": 1,
    "user_additional": [

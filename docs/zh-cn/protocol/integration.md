@@ -760,6 +760,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
   ::: field name="use_sanity_potion" type="boolean" optional default="false"  
   是否允许在剩余理智不足时使用理智药。  
   :::  
+  ::: field name="retry_on_leak" type="boolean" optional default="false"  
+  多作业模式下，检测到目标生命降低时退出当前作战并重试一次。允许战术漏怪的作业请勿启用。  
+  :::  
   ::: field name="formation" type="boolean" optional default="false"  
   是否进行自动编队。  
   :::  
@@ -810,6 +813,7 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
    "filename": "copilot/1-7.json",
    "loop_times": 2,
    "use_sanity_potion": false,
+   "retry_on_leak": false,
    "formation": true,
    "formation_index": 1,
    "user_additional": [

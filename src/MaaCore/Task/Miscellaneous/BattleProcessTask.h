@@ -16,6 +16,8 @@ public:
 
     virtual bool set_stage_name(const std::string& stage_name) override;
     void set_wait_until_end(bool wait_until_end);
+    void set_retry_on_leak(bool retry_on_leak) { m_retry_on_leak = retry_on_leak; }
+    bool was_abandoned_for_leak() const { return m_abandoned_for_leak; }
     void set_formation_task_ptr(std::shared_ptr<std::unordered_map<std::string, std::string>> value);
 
 protected:
@@ -34,6 +36,7 @@ protected:
     virtual battle::copilot::CombatData& get_combat_data() { return m_combat_data; }
 
     virtual bool need_to_wait_until_end() const { return m_need_to_wait_until_end; }
+    virtual bool check_in_battle(const cv::Mat& reusable = cv::Mat(), bool weak = true) override;
 
     bool to_group();
     bool do_action(const battle::copilot::Action& action, size_t index);
@@ -49,6 +52,9 @@ protected:
 
     bool m_in_bullet_time = false;
     bool m_need_to_wait_until_end = false;
+    bool m_retry_on_leak = false;
+    bool m_abandoned_for_leak = false;
+    int m_leak_detected_frames = 0;
     std::shared_ptr<std::unordered_map<std::string, std::string>> m_formation_ptr = nullptr;
 };
 }

@@ -4435,6 +4435,13 @@
         "roi": [791, 497, 313, 157],
         "next": ["NormalBattleAbandon", "Stop"]
     },
+    "CopilotBattleExitBegin": {
+        "template": "RoguelikeBattleExitBegin.png",
+        "action": "ClickSelf",
+        "roi": [3, 0, 153, 154],
+        "maskRange": [100, 255],
+        "next": ["NormalBattleAbandon", "CopilotBattleExitBegin"]
+    },
     "DepotSlowlySwipeToTheRight": {
         "baseTask": "SlowlySwipeToTheRight",
         "specificRect": [1150, 340, 20, 20],

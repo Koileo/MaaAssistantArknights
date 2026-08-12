@@ -67,6 +67,40 @@ void asst::BattleProcessTask::clear()
 
     m_oper_in_group.clear();
     m_in_bullet_time = false;
+    m_abandoned_for_leak = false;
+    m_leak_detected_frames = 0;
+}
+
+bool asst::BattleProcessTask::check_in_battle(const cv::Mat& reusable, bool weak)
+{
+    const cv::Mat image = reusable.empty() ? ctrler()->get_image() : reusable;
+    const bool in_battle = BattleHelper::check_in_battle(image, weak);
+    if (!m_retry_on_leak || m_abandoned_for_leak || !in_battle) {
+        m_leak_detected_frames = 0;
+        return in_battle;
+    }
+
+    BattlefieldMatcher analyzer(image);
+    if (!analyzer.hp_lost_analyze()) {
+        m_leak_detected_frames = 0;
+        return true;
+    }
+
+    // Require two consecutive frames so a transient template match cannot abort a battle.
+    if (++m_leak_detected_frames < 2) {
+        return true;
+    }
+
+    Log.warn("Copilot detected an enemy leak; abandoning the current battle for retry");
+    if (!pause() || !ProcessTask(*this, { "CopilotBattleExitBegin" }).set_retry_times(3).run()) {
+        Log.error("Copilot failed to abandon the battle after detecting an enemy leak");
+        return true;
+    }
+    json::value info = basic_info_with_what("CopilotBattleLeakDetected");
+    callback(AsstMsg::SubTaskExtraInfo, info);
+    m_abandoned_for_leak = true;
+    m_in_battle = false;
+    return false;
 }
 
 bool asst::BattleProcessTask::set_stage_name(const std::string& stage_name)

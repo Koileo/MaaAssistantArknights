@@ -760,6 +760,9 @@ Tag 等級（大於等於 3）對應的期望招募時限（單位：分鐘）�
   ::: field name="use_sanity_potion" type="boolean" optional default="false"  
   是否允許在理智不足時自動使用理智藥。  
   :::  
+  ::: field name="retry_on_leak" type="boolean" optional default="false"  
+  多作業模式下，偵測到目標生命降低時退出目前作戰並重試一次。允許戰術漏怪的作業請勿啟用。  
+  :::  
   ::: field name="formation" type="boolean" optional default="false"  
   是否執行自動編隊。  
   :::  
@@ -810,6 +813,7 @@ Tag 等級（大於等於 3）對應的期望招募時限（單位：分鐘）�
    "filename": "copilot/1-7.json",
    "loop_times": 2,
    "use_sanity_potion": false,
+   "retry_on_leak": false,
    "formation": true,
    "formation_index": 1,
    "user_additional": [

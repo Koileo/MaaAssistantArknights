@@ -260,6 +260,12 @@ bool BattlefieldMatcher::hp_flag_analyze() const
     }
 
     // 漏怪的时候，那个图标会变成红色的，所以多识别一次
+    return hp_lost_analyze();
+}
+
+bool BattlefieldMatcher::hp_lost_analyze() const
+{
+    Matcher flag_analyzer(m_image);
     flag_analyzer.set_task_info("BattleHpFlag2");
     return flag_analyzer.analyze().has_value();
 }

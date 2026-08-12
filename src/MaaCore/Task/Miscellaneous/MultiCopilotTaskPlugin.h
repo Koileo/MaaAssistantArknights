@@ -32,6 +32,7 @@ public:
     void set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks);
 
     bool has_pending_config() const { return m_index_current < static_cast<int>(m_copilot_configs.size()); }
+    bool was_abandoned_for_leak() const;
     bool complete_current_battle(bool three_stars);
 
 private:

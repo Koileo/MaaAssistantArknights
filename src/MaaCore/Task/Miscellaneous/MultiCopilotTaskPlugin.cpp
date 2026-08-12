@@ -85,6 +85,11 @@ void asst::MultiCopilotTaskPlugin::set_cycle_tasks(const std::vector<std::shared
     m_cycle_tasks.assign(tasks.begin(), tasks.end());
 }
 
+bool asst::MultiCopilotTaskPlugin::was_abandoned_for_leak() const
+{
+    return m_battle_task_ptr && m_battle_task_ptr->was_abandoned_for_leak();
+}
+
 bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
 {
     if (!has_pending_config()) {
@@ -120,6 +125,10 @@ bool asst::MultiCopilotSettlementTask::_run()
 {
     if (!m_multi_copilot_task_ptr || !m_multi_copilot_task_ptr->has_pending_config()) {
         return true;
+    }
+
+    if (m_multi_copilot_task_ptr->was_abandoned_for_leak()) {
+        return m_multi_copilot_task_ptr->complete_current_battle(false);
     }
 
     ProcessTask settlement(*this, { "Copilot@WaitUntilEndOfAction-Retry" });
