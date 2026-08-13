@@ -39,6 +39,7 @@ public:
 private:
     virtual bool _run() override;
     size_t select_visible_config();
+    bool navigate_to_chapter_if_needed(const std::string& stage_name);
     bool navigate_to_stage(const std::string& stage_name);
     bool enter_stage(const Rect rect, const std::string& stage_name);
     OCRer::ResultsVec find_stage(
@@ -51,6 +52,7 @@ private:
     std::vector<MultiCopilotConfig> m_copilot_configs;
     int m_index_current = 0; // 当前执行的索引
     int m_current_retry = 0;
+    std::optional<int> m_current_chapter;
     bool m_switch_copilot_on_failure = false;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;
     std::vector<std::weak_ptr<AbstractTask>> m_cycle_tasks;

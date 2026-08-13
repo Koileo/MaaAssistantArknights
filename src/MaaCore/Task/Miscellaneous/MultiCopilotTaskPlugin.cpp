@@ -1,6 +1,7 @@
 #include "MultiCopilotTaskPlugin.h"
 
 #include <ranges>
+#include <regex>
 
 #include "Config/GeneralConfig.h"
 #include "Config/Miscellaneous/CopilotConfig.h"
@@ -61,7 +62,7 @@ bool asst::MultiCopilotTaskPlugin::_run()
 
     bool ret = true;
     for (int i = 0; i < m_max_retry; ++i) {
-        ret = navigate_to_stage(config.nav_name);
+        ret = navigate_to_chapter_if_needed(config.nav_name) && navigate_to_stage(config.nav_name);
         sleep(Config.get_options().task_delay);
         if (ret) {
             break;
@@ -78,6 +79,32 @@ bool asst::MultiCopilotTaskPlugin::_run()
     }
 
     return ret;
+}
+
+bool asst::MultiCopilotTaskPlugin::navigate_to_chapter_if_needed(const std::string& stage_name)
+{
+    static const std::regex main_stage(R"(^S?(\d{1,2})-\d{1,2}$)");
+    std::smatch match;
+    if (!std::regex_match(stage_name, match, main_stage)) {
+        return true;
+    }
+
+    const int chapter = std::stoi(match[1].str());
+    if (m_current_chapter == chapter) {
+        return true;
+    }
+
+    const std::string task = "Episode" + std::to_string(chapter);
+    if (!Task.get(task)) {
+        Log.error("MultiCopilot chapter task not found", task);
+        return false;
+    }
+    Log.info("MultiCopilot enter chapter", chapter, "for stage", stage_name);
+    if (!ProcessTask(*this, { task }).set_retry_times(m_max_retry).run()) {
+        return false;
+    }
+    m_current_chapter = chapter;
+    return true;
 }
 
 void asst::MultiCopilotTaskPlugin::set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks)
