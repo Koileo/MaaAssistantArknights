@@ -1437,10 +1437,11 @@
         "next": ["PRTS#next", "WaitAfterPRTS@LoadingText", "WaitAfterPRTS@LoadingIcon", "ClickCornerAfterPRTS"]
     },
     "CheckLevelUp": {
-        "doc": "跳过可能出现的等级提升界面。另外还有个金圈升级动画的界面，可能还需要一次点击。很难验证，先把这个页面点了",
+        "doc": "跳过可能出现的等级提升界面，等待动画结束后回到结算等待流程继续点击",
         "action": "ClickSelf",
         "roi": [1000, 250, 270, 200],
-        "next": ["AnnihilationPrtsRecordConfirm", "EndOfActionAnnihilation", "EndOfAction"]
+        "postDelay": 3000,
+        "next": ["AnnihilationPrtsRecordConfirm", "EndOfActionAnnihilation", "EndOfAction", "ClickCornerAfterPRTS"]
     },
     "ClickCornerAfterPRTS": {
         "algorithm": "JustReturn",
