@@ -60,9 +60,17 @@ bool asst::MultiCopilotTaskPlugin::_run()
     info["details"]["id"] = config.id;
     callback(AsstMsg::SubTaskExtraInfo, info);
 
-    bool ret = true;
+    bool ret = false;
     for (int i = 0; i < m_max_retry; ++i) {
-        ret = navigate_to_chapter_if_needed(config.nav_name) && navigate_to_stage(config.nav_name);
+        const auto image = ctrler()->get_image();
+        ret = navigate_to_visible_stage(image, config.nav_name);
+        if (!ret) {
+            ret = navigate_to_chapter_if_needed(config.nav_name);
+            if (ret) {
+                const auto chapter_image = ctrler()->get_image();
+                ret = navigate_to_visible_stage(chapter_image, config.nav_name) || navigate_to_stage(config.nav_name);
+            }
+        }
         sleep(Config.get_options().task_delay);
         if (ret) {
             break;
@@ -251,15 +259,6 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_stage(const std::string& stage_na
     // 模板不存在，使用基于图像分析的 OCR 方案
     Log.info("No stage template available, using image-based OCR for", stage_name);
 
-    auto image = ctrler()->get_image();
-
-    if (is_stage_detail_opened(image)) { // 关卡介绍已展开
-        bool ret = confirm_stage_name(image, stage_name);
-        if (ret) {
-            return true;
-        }
-    }
-
     const auto& task = Task.get<OcrTaskInfo>(stage_name + "@ClickStageName");
     std::tuple<int, int, int> threshold_low {
         task->special_params[0],
@@ -271,6 +270,7 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_stage(const std::string& stage_na
         task->special_params[4],
         task->special_params[5],
     };
+    auto image = ctrler()->get_image();
     auto stages = find_stage(image, threshold_low, threshold_high);
     auto it = std::ranges::find_if(stages, [&](const OcrPack::Result& r) { return r.text == stage_name; });
     if (it != stages.end()) {
@@ -324,6 +324,34 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_stage(const std::string& stage_na
     }
 
     return false;
+}
+
+bool asst::MultiCopilotTaskPlugin::navigate_to_visible_stage(const cv::Mat& image, const std::string& stage_name)
+{
+    if (is_stage_detail_opened(image) && confirm_stage_name(image, stage_name)) {
+        Log.info("MultiCopilot already at target stage", stage_name);
+        return true;
+    }
+
+    const auto& task = Task.get<OcrTaskInfo>(stage_name + "@ClickStageName");
+    std::tuple<int, int, int> threshold_low {
+        task->special_params[0],
+        task->special_params[1],
+        task->special_params[2],
+    };
+    std::tuple<int, int, int> threshold_high {
+        task->special_params[3],
+        task->special_params[4],
+        task->special_params[5],
+    };
+    const auto stages = find_stage(image, threshold_low, threshold_high);
+    const auto it = std::ranges::find_if(stages, [&](const OcrPack::Result& result) { return result.text == stage_name; });
+    if (it == stages.end()) {
+        return false;
+    }
+
+    Log.info("MultiCopilot target stage is visible", stage_name);
+    return enter_stage(it->rect, stage_name);
 }
 
 bool asst::MultiCopilotTaskPlugin::enter_stage(const Rect rect, const std::string& stage_name)

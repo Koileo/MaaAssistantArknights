@@ -40,6 +40,7 @@ private:
     virtual bool _run() override;
     size_t select_visible_config();
     bool navigate_to_chapter_if_needed(const std::string& stage_name);
+    bool navigate_to_visible_stage(const cv::Mat& image, const std::string& stage_name);
     bool navigate_to_stage(const std::string& stage_name);
     bool enter_stage(const Rect rect, const std::string& stage_name);
     OCRer::ResultsVec find_stage(
