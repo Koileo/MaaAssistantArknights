@@ -100,6 +100,12 @@ bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
     if (three_stars) {
         Log.info("MultiCopilot stage completed with three stars", config.nav_name);
         ++m_index_current;
+        if (m_switch_copilot_on_failure) {
+            while (has_pending_config() && m_copilot_configs[m_index_current].nav_name == config.nav_name) {
+                Log.info("MultiCopilot skip unused fallback", m_copilot_configs[m_index_current].copilot_file);
+                ++m_index_current;
+            }
+        }
         m_current_retry = 0;
         if (!has_pending_config()) {
             for (const auto& task : m_cycle_tasks) {
@@ -109,6 +115,21 @@ bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
             }
         }
         return true;
+    }
+
+    if (m_switch_copilot_on_failure) {
+        const auto next = static_cast<size_t>(m_index_current + 1);
+        if (next < m_copilot_configs.size() && m_copilot_configs[next].nav_name == config.nav_name) {
+            Log.warn(
+                "MultiCopilot stage failed; switch to fallback",
+                config.nav_name,
+                m_copilot_configs[next].copilot_file);
+            ++m_index_current;
+            m_current_retry = 0;
+            return true;
+        }
+        Log.error("MultiCopilot exhausted all fallbacks for stage", config.nav_name);
+        return false;
     }
 
     if (m_current_retry == 0) {

@@ -30,6 +30,7 @@ public:
 
     void set_battle_task_ptr(const std::shared_ptr<BattleProcessTask>& ptr) { m_battle_task_ptr = ptr; }
     void set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks);
+    void set_switch_copilot_on_failure(bool value) { m_switch_copilot_on_failure = value; }
 
     bool has_pending_config() const { return m_index_current < static_cast<int>(m_copilot_configs.size()); }
     bool was_abandoned_for_leak() const;
@@ -50,6 +51,7 @@ private:
     std::vector<MultiCopilotConfig> m_copilot_configs;
     int m_index_current = 0; // 当前执行的索引
     int m_current_retry = 0;
+    bool m_switch_copilot_on_failure = false;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;
     std::vector<std::weak_ptr<AbstractTask>> m_cycle_tasks;
     int m_max_retry = 20;

@@ -75,6 +75,7 @@ bool asst::CopilotTask::set_params(const json::value& params)
     bool add_trust = params.get("add_trust", false);                                 // 是否自动补信赖
     bool ignore_requirements = params.get("ignore_requirements", false);             // 跳过未满足的干员属性要求
     bool retry_on_leak = params.get("retry_on_leak", false);                         // 漏怪时退出并重试
+    bool switch_copilot_on_failure = params.get("switch_copilot_on_failure", false); // 失败时切换同关候选作业
     bool add_user_additional = params.contains("user_additional");                   // 是否自动补用户自定义干员
     auto support_unit_usage = static_cast<SupportUnitUsage>(
         params.get("support_unit_usage", static_cast<int>(SupportUnitUsage::None))); // 助战干员使用模式
@@ -104,6 +105,7 @@ bool asst::CopilotTask::set_params(const json::value& params)
         m_multi_copilot_plugin_ptr->set_enable(true); // 启用多任务插件, 自动覆盖Copilot中的配置
         m_battle_task_ptr->set_wait_until_end(true);
         m_battle_task_ptr->set_retry_on_leak(retry_on_leak);
+        m_multi_copilot_plugin_ptr->set_switch_copilot_on_failure(switch_copilot_on_failure);
         auto configs = static_cast<std::vector<MultiCopilotConfig>>(*multi_tasks_opt);
         std::vector<MultiCopilotTaskPlugin::MultiCopilotConfig> configs_cvt;
         for (const auto& [id, filename, stage_name, is_raid] : configs) {
