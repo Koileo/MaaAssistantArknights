@@ -152,6 +152,12 @@ bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
         return true;
     }
 
+    json::value info = basic_info_with_what("CopilotListTaskFileFailed");
+    info["details"]["stage_name"] = config.nav_name;
+    info["details"]["file_name"] = utils::path_to_utf8_string(config.copilot_file);
+    info["details"]["id"] = config.id;
+    callback(AsstMsg::SubTaskExtraInfo, info);
+
     if (m_switch_copilot_on_failure) {
         const auto next = static_cast<size_t>(m_index_current + 1);
         if (next < m_copilot_configs.size() && m_copilot_configs[next].nav_name == config.nav_name) {
