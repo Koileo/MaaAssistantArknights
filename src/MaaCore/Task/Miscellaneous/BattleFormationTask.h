@@ -117,6 +117,8 @@ protected:
     bool click_role_table(battle::Role role);
     bool select_random_support_unit();
     void report_missing_operators();
+    void report_support_unit_unavailable();
+    void leave_formation_after_failure();
     // 干员组中有干员已被选中
     bool has_oper_selected(const std::vector<asst::battle::OperUsage>& opers) const;
     bool has_oper_unchecked(const std::vector<asst::battle::OperUsage>& opers) const;

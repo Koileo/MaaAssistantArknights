@@ -51,6 +51,7 @@ asst::CopilotTask::CopilotTask(const AsstCallback& callback, Assistant* inst) :
     m_subtasks.emplace_back(m_battle_task_ptr)->set_retry_times(0);
 
     m_multi_copilot_settlement_ptr->set_enable(false);
+    m_multi_copilot_settlement_ptr->set_retry_times(0);
     m_multi_copilot_settlement_ptr->set_multi_copilot_task_ptr(m_multi_copilot_plugin_ptr);
     m_stop_task_ptr->set_enable(false);
     m_subtasks.emplace_back(m_stop_task_ptr);

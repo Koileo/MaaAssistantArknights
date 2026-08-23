@@ -623,6 +623,14 @@
         "text": [],
         "roi": [850, 140, 250, 220]
     },
+    "ResourceStageLevelLow": {
+        "Doc": "资源关卡 1-4 的通用 OCR 区域",
+        "algorithm": "OcrDetect",
+        "baseTask": "Stage",
+        "isAscii": true,
+        "text": [],
+        "roi": [0, 80, 1100, 560]
+    },
     "ResourceStageLevel6": {
         "Doc": "base_task",
         "algorithm": "OcrDetect",
@@ -1410,7 +1418,7 @@
     "PRTS": {
         "algorithm": "JustReturn",
         "postDelay": 5000,
-        "next": ["PRTS1", "PRTS2", "PRTS3", "EndOfAction", "PrtsErrorConfirm", "FightMissionFailed"]
+        "next": ["PRTS1", "PRTS2", "PRTS3", "EndOfAction", "CheckLevelUp", "CheckLevelUpOcr", "PrtsErrorConfirm", "FightMissionFailed", "WaitAfterPRTS"]
     },
     "PRTS1": {
         "template": "BattleOfficiallyBegin.png",
@@ -1438,10 +1446,37 @@
     },
     "CheckLevelUp": {
         "doc": "跳过可能出现的等级提升界面，等待动画结束后回到结算等待流程继续点击",
-        "action": "ClickSelf",
-        "roi": [1000, 250, 270, 200],
-        "postDelay": 3000,
-        "next": ["AnnihilationPrtsRecordConfirm", "EndOfActionAnnihilation", "EndOfAction", "ClickCornerAfterPRTS"]
+        "action": "ClickRect",
+        "specificRect": [1200, 100, 50, 50],
+        "roi": [900, 200, 380, 300],
+        "postDelay": 2000,
+        "next": [
+            "CheckLevelUp",
+            "CheckLevelUpOcr",
+            "AnnihilationPrtsRecordConfirm",
+            "EndOfActionAnnihilation",
+            "EndOfAction",
+            "ClickCornerAfterPRTS",
+            "ClickCorner"
+        ]
+    },
+    "CheckLevelUpOcr": {
+        "doc": "OCR 识别升级界面（等级提升 / LEVEL UP），点击空白处跳过",
+        "algorithm": "OcrDetect",
+        "text": ["等级提升", "LEVEL UP", "LEVEL", "提升"],
+        "action": "ClickRect",
+        "specificRect": [1200, 100, 50, 50],
+        "roi": [300, 100, 680, 500],
+        "postDelay": 2000,
+        "next": [
+            "CheckLevelUp",
+            "CheckLevelUpOcr",
+            "AnnihilationPrtsRecordConfirm",
+            "EndOfActionAnnihilation",
+            "EndOfAction",
+            "ClickCornerAfterPRTS",
+            "ClickCorner"
+        ]
     },
     "ClickCornerAfterPRTS": {
         "algorithm": "JustReturn",
@@ -1453,6 +1488,7 @@
         "postDelay": 3000,
         "next": [
             "CheckLevelUp",
+            "CheckLevelUpOcr",
             "AnnihilationPrtsRecordConfirm",
             "EndOfActionAnnihilation",
             "EndOfAction",
@@ -1484,6 +1520,8 @@
         "next": [
             "StartButton1",
             "StartButton2",
+            "CheckLevelUp",
+            "CheckLevelUpOcr",
             "UseMedicine",
             "UseStone",
             "NoStone",
@@ -3785,7 +3823,7 @@
     },
     "SkipThePreBattlePlotOCR": {
         "algorithm": "OcrDetect",
-        "text": ["跳过", "Skip"],
+        "text": ["跳过", "跳過", "Skip", "SKIP", "スキップ", "스킵", "건너뛰기"],
         "roi": [1020, 0, 260, 180],
         "fullMatch": false,
         "action": "ClickSelf"
@@ -4793,6 +4831,8 @@
         "next": [
             "Copilot@SkipThePreBattlePlotOCR",
             "Copilot@SkipThePreBattlePlot",
+            "Copilot@CheckLevelUp",
+            "Copilot@CheckLevelUpOcr",
             "Copilot@EndOfAction",
             "Copilot@EndOfAction-Sandbox",
             "Copilot@FightMissionFailed",
@@ -4806,6 +4846,8 @@
         "next": [
             "Copilot@SkipThePreBattlePlotOCR",
             "Copilot@SkipThePreBattlePlot",
+            "Copilot@CheckLevelUp",
+            "Copilot@CheckLevelUpOcr",
             "Copilot@EndOfAction-Bypass",
             "Copilot@EndOfAction-Sandbox",
             "Copilot@FightMissionFailed-Bypass",
@@ -4836,6 +4878,8 @@
         "next": [
             "Copilot@SkipThePreBattlePlotOCR-Retry",
             "Copilot@SkipThePreBattlePlot-Retry",
+            "Copilot@CheckLevelUp",
+            "Copilot@CheckLevelUpOcr",
             "Copilot@EndOfAction-Retry",
             "Copilot@FightMissionFailed-Retry",
             "Copilot@WaitUntilEndOfAction-Retry"
@@ -4874,8 +4918,62 @@
         ]
     },
     "Copilot@FightMissionFailed-Retry": {
+        "doc": "点击任务失败页后继续处理可能出现的 PRTS 干员等级过低提示",
         "baseTask": "Copilot@FightMissionFailed",
-        "next": ["Copilot@EndOfAction-Retry"]
+        "next": ["Copilot@FightMissionFailedWaitForStage-Retry"]
+    },
+    "Copilot@FightMissionFailedWaitForStage-Retry": {
+        "doc": "等待并处理任务失败后的可选 PRTS 提示，回到关卡详情页或目标关卡所在地图即完成结算",
+        "algorithm": "JustReturn",
+        "postDelay": 1000,
+        "next": [
+            "Copilot@FightMissionFailedStageFlag-Retry",
+            "Copilot@FightMissionFailedStageMapFlag-Retry",
+            "Copilot@FightMissionFailedPrtsSkip-Retry",
+            "Copilot@FightMissionFailedPrtsConfirm-Retry",
+            "Copilot@ClickCornerUntilStartButton@LoadingIcon",
+            "Copilot@FightMissionFailedContinue-Retry"
+        ]
+    },
+    "Copilot@FightMissionFailedStageFlag-Retry": {
+        "baseTask": "BattleStartPreFlag"
+    },
+    "Copilot@FightMissionFailedStageMapFlag-Retry": {
+        "doc": "漏怪退出后已回到章节地图；关卡名由 MultiCopilotSettlementTask 动态注入",
+        "algorithm": "OcrDetect",
+        "text": [],
+        "roi": [0, 0, 1280, 720],
+        "isAscii": true,
+        "fullMatch": true
+    },
+    "Copilot@FightMissionFailedPrtsSkip-Retry": {
+        "doc": "跳过任务失败后可能出现的 PRTS 干员等级过低提示",
+        "algorithm": "OcrDetect",
+        "text": ["跳过", "Skip"],
+        "roi": [0, 0, 1280, 720],
+        "fullMatch": false,
+        "action": "ClickSelf",
+        "postDelay": 1500,
+        "next": ["Copilot@FightMissionFailedWaitForStage-Retry"]
+    },
+    "Copilot@FightMissionFailedPrtsConfirm-Retry": {
+        "doc": "兼容部分客户端中 PRTS 提示使用确认按钮的情况",
+        "algorithm": "OcrDetect",
+        "text": ["确认", "Confirm"],
+        "roi": [630, 360, 650, 360],
+        "fullMatch": false,
+        "action": "ClickSelf",
+        "postDelay": 1500,
+        "next": ["Copilot@FightMissionFailedWaitForStage-Retry"]
+    },
+    "Copilot@FightMissionFailedContinue-Retry": {
+        "doc": "没有额外提示时点击安全区域推进失败结算",
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [1260, 100, 10, 10],
+        "postDelay": 1500,
+        "maxTimes": 30,
+        "next": ["Copilot@FightMissionFailedWaitForStage-Retry"]
     },
     "Copilot@StageDrops-Retry-Stars-3": {
         "baseTask": "StageDrops-Stars-3",
@@ -4936,12 +5034,30 @@
     },
     "Copilot@ClickCornerUntilStartButton": {
         "Doc": "三星之后",
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [1260, 100, 10, 10],
+        "maxTimes": 20,
+        "postDelay": 2000,
         "next": [
+            "Copilot@CheckLevelUp",
+            "Copilot@CheckLevelUpOcr",
             "Copilot@BattleStartPreFlag",
             "Copilot@BattleStartPreFlag-Return",
             "Copilot@ClickCornerUntilStartButton@LoadingIcon",
             "Copilot@ClickCornerUntilStartButton"
         ]
+    },
+    "Copilot@CheckLevelUp": {
+        "doc": "跳过升级界面后继续等待返回关卡详情或章节地图",
+        "baseTask": "CheckLevelUp",
+        "template": "CheckLevelUp.png",
+        "next": ["Copilot@ClickCornerUntilStartButton", "Copilot@WaitUntilEndOfAction"]
+    },
+    "Copilot@CheckLevelUpOcr": {
+        "doc": "OCR 识别升级界面（等级提升 / LEVEL UP）后继续等待返回关卡详情或章节地图",
+        "baseTask": "CheckLevelUpOcr",
+        "next": ["Copilot@ClickCornerUntilStartButton", "Copilot@WaitUntilEndOfAction"]
     },
     "Copilot@BattleStartPreFlag": {
         "baseTask": "BattleStartPreFlag",
@@ -4960,7 +5076,7 @@
         "algorithm": "JustReturn",
         "action": "ClickRect",
         "specificRect": [1260, 100, 10, 10],
-        "next": ["BattleStartPreFlag", "ClickCornerUntilStartButton"]
+        "next": ["BattleStartPreFlag", "CheckLevelUp", "CheckLevelUpOcr", "ClickCornerUntilStartButton"]
     },
     "ClickCornerUntilReturnButton": {
         "algorithm": "JustReturn",

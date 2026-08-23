@@ -1,4 +1,20 @@
 {
+    "CE-1": {
+        "baseTask": "ResourceStages",
+        "next": ["CE1@StageCE"]
+    },
+    "CE-2": {
+        "baseTask": "ResourceStages",
+        "next": ["CE2@StageCE"]
+    },
+    "CE-3": {
+        "baseTask": "ResourceStages",
+        "next": ["CE3@StageCE"]
+    },
+    "CE-4": {
+        "baseTask": "ResourceStages",
+        "next": ["CE4@StageCE"]
+    },
     "CE-5": {
         "algorithm": "JustReturn",
         "next": ["CE-6"]
@@ -6,6 +22,22 @@
     "CE-6": {
         "baseTask": "ResourceStages",
         "next": ["CE6@StageCE", "CE-6@SwipeToTheLeft"]
+    },
+    "LS-1": {
+        "baseTask": "ResourceStages",
+        "next": ["LS1@StageLS"]
+    },
+    "LS-2": {
+        "baseTask": "ResourceStages",
+        "next": ["LS2@StageLS"]
+    },
+    "LS-3": {
+        "baseTask": "ResourceStages",
+        "next": ["LS3@StageLS"]
+    },
+    "LS-4": {
+        "baseTask": "ResourceStages",
+        "next": ["LS4@StageLS"]
     },
     "LS-5": {
         "algorithm": "JustReturn",
@@ -15,13 +47,61 @@
         "baseTask": "ResourceStages",
         "next": ["LS6@StageLS"]
     },
+    "CA-1": {
+        "baseTask": "ResourceStages",
+        "next": ["CA1@StageCA"]
+    },
+    "CA-2": {
+        "baseTask": "ResourceStages",
+        "next": ["CA2@StageCA"]
+    },
+    "CA-3": {
+        "baseTask": "ResourceStages",
+        "next": ["CA3@StageCA"]
+    },
+    "CA-4": {
+        "baseTask": "ResourceStages",
+        "next": ["CA4@StageCA"]
+    },
     "CA-5": {
         "baseTask": "ResourceStages",
         "next": ["CA5@StageCA", "CA-5@SwipeToTheLeft"]
     },
+    "AP-1": {
+        "baseTask": "ResourceStages",
+        "next": ["AP1@StageAP"]
+    },
+    "AP-2": {
+        "baseTask": "ResourceStages",
+        "next": ["AP2@StageAP"]
+    },
+    "AP-3": {
+        "baseTask": "ResourceStages",
+        "next": ["AP3@StageAP"]
+    },
+    "AP-4": {
+        "baseTask": "ResourceStages",
+        "next": ["AP4@StageAP"]
+    },
     "AP-5": {
         "baseTask": "ResourceStages",
         "next": ["AP5@StageAP", "AP-5@SwipeToTheLeft"]
+    },
+    "SK-1": {
+        "baseTask": "ResourceStages",
+        "next": ["SK1@StageSK"]
+    },
+    "SK-2": {
+        "baseTask": "ResourceStages",
+        "next": ["SK2@StageSK"]
+    },
+    "SK-3": {
+        "baseTask": "ResourceStages",
+        "next": ["SK3@StageSK"]
+    },
+    "SK-4": {
+        "baseTask": "ResourceStages",
+        "next": ["SK4@StageSK"]
     },
     "SK-5": {
         "baseTask": "ResourceStages",
@@ -90,9 +170,29 @@
     "StagePR-D": {
         "baseTask": "StageEntries"
     },
+    "CE1@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CE-1"]
+    },
+    "CE2@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CE-2"]
+    },
+    "CE3@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CE-3"]
+    },
+    "CE4@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CE-4"]
+    },
     "CE5@Stage": {
         "baseTask": "ResourceStageLevel5",
         "text": ["CE-5"]
+    },
+    "CopilotResource@CE-5": {
+        "baseTask": "ResourceStages",
+        "next": ["CE5@StageCE"]
     },
     "CE6@Stage": {
         "baseTask": "CE5@ResourceStageLevel6",
@@ -102,17 +202,85 @@
         "baseTask": "ResourceStageLevel5",
         "text": ["LS-5"]
     },
+    "CopilotResource@LS-5": {
+        "baseTask": "ResourceStages",
+        "next": ["LS5@StageLS"]
+    },
+    "LS1@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["LS-1"]
+    },
+    "LS2@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["LS-2"]
+    },
+    "LS3@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["LS-3"]
+    },
+    "LS4@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["LS-4"]
+    },
     "LS6@Stage": {
         "baseTask": "LS5@ResourceStageLevel6",
         "text": ["LS-6"]
+    },
+    "CA1@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CA-1"]
+    },
+    "CA2@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CA-2"]
+    },
+    "CA3@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CA-3"]
+    },
+    "CA4@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["CA-4"]
     },
     "CA5@Stage": {
         "baseTask": "ResourceStageLevel5",
         "text": ["CA-5"]
     },
+    "AP1@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["AP-1"]
+    },
+    "AP2@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["AP-2"]
+    },
+    "AP3@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["AP-3"]
+    },
+    "AP4@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["AP-4"]
+    },
     "AP5@Stage": {
         "baseTask": "ResourceStageLevel5",
         "text": ["AP-5"]
+    },
+    "SK1@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["SK-1"]
+    },
+    "SK2@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["SK-2"]
+    },
+    "SK3@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["SK-3"]
+    },
+    "SK4@Stage": {
+        "baseTask": "ResourceStageLevelLow",
+        "text": ["SK-4"]
     },
     "SK5@Stage": {
         "baseTask": "ResourceStageLevel5",

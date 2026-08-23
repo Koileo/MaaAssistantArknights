@@ -65,6 +65,12 @@ bool asst::MultiCopilotTaskPlugin::_run()
         const auto image = ctrler()->get_image();
         ret = navigate_to_visible_stage(image, config.nav_name);
         if (!ret) {
+            ret = navigate_to_resource_if_needed(config.nav_name);
+            if (ret) {
+                ret = is_stage_detail_opened(ctrler()->get_image());
+            }
+        }
+        if (!ret) {
             ret = navigate_to_chapter_if_needed(config.nav_name);
             if (ret) {
                 const auto chapter_image = ctrler()->get_image();
@@ -89,15 +95,50 @@ bool asst::MultiCopilotTaskPlugin::_run()
     return ret;
 }
 
+bool asst::MultiCopilotTaskPlugin::navigate_to_resource_if_needed(const std::string& stage_name)
+{
+    static const std::regex resource_stage(R"(^(CE|LS|CA|AP|SK|PR-[A-D])-\d$)");
+    std::smatch match;
+    if (!std::regex_match(stage_name, match, resource_stage)) {
+        return false;
+    }
+
+    const std::string line = match[1].str();
+    if (m_current_resource_line == line) {
+        return false;
+    }
+
+    Log.info("MultiCopilot enter resource line", line, "for stage", stage_name);
+    const std::string task = stage_name == "CE-5" || stage_name == "LS-5"
+                                 ? "CopilotResource@" + stage_name
+                                 : stage_name;
+    if (!ProcessTask(*this, { task }).set_retry_times(m_max_retry).run()) {
+        return false;
+    }
+    m_current_resource_line = line;
+    return true;
+}
+
 bool asst::MultiCopilotTaskPlugin::navigate_to_chapter_if_needed(const std::string& stage_name)
 {
-    static const std::regex main_stage(R"(^S?(\d{1,2})-\d{1,2}$)");
+    static const std::regex main_stage(R"(^([A-Za-z]{0,3})(\d{1,2})-\d{1,2}(?:-?(\w+))*$)");
     std::smatch match;
-    if (!std::regex_match(stage_name, match, main_stage)) {
+    int chapter = -1;
+    if (std::regex_match(stage_name, match, main_stage)) {
+        static const std::unordered_set<std::string_view> valid_prefixes = { "", "S", "H", "R", "M", "JT" };
+        std::string prefix = match[1].str();
+        std::ranges::transform(prefix, prefix.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        if (valid_prefixes.contains(prefix)) {
+            chapter = std::stoi(match[2].str());
+        }
+        else {
+            return true;
+        }
+    }
+    else {
         return true;
     }
 
-    const int chapter = std::stoi(match[1].str());
     if (m_current_chapter == chapter) {
         return true;
     }
@@ -109,7 +150,27 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_chapter_if_needed(const std::stri
     }
     Log.info("MultiCopilot enter chapter", chapter, "for stage", stage_name);
     if (!ProcessTask(*this, { task }).set_retry_times(m_max_retry).run()) {
-        return false;
+        auto [threshold_low, threshold_high] = get_stage_thresholds(stage_name);
+        const auto episode = chapter < 10 ? "0" + std::to_string(chapter) : std::to_string(chapter);
+        const auto episodes = find_stage(ctrler()->get_image(), threshold_low, threshold_high);
+        const auto target = std::ranges::find_if(episodes, [&](const OcrPack::Result& result) {
+            return result.text == episode && result.rect.x > 900 && result.rect.y > 600;
+        });
+        if (target == episodes.end()) {
+            return false;
+        }
+
+        if (target->rect.x >= 1020 && target->rect.x <= 1140) {
+            Log.info("MultiCopilot already in visible episode", episode);
+            m_current_chapter = chapter;
+            return true;
+        }
+
+        Log.info("MultiCopilot click visible episode button", episode, target->rect);
+        ctrler()->click(target->rect);
+        sleep(Config.get_options().task_delay);
+        // The caller verifies the target stage after switching episodes.
+        return true;
     }
     m_current_chapter = chapter;
     return true;
@@ -123,6 +184,11 @@ void asst::MultiCopilotTaskPlugin::set_cycle_tasks(const std::vector<std::shared
 bool asst::MultiCopilotTaskPlugin::was_abandoned_for_leak() const
 {
     return m_battle_task_ptr && m_battle_task_ptr->was_abandoned_for_leak();
+}
+
+const std::string& asst::MultiCopilotTaskPlugin::current_stage_name() const
+{
+    return m_copilot_configs.at(m_index_current).nav_name;
 }
 
 bool asst::MultiCopilotTaskPlugin::complete_current_battle(bool three_stars)
@@ -189,26 +255,47 @@ bool asst::MultiCopilotSettlementTask::_run()
         return true;
     }
 
-    if (m_multi_copilot_task_ptr->was_abandoned_for_leak()) {
-        return m_multi_copilot_task_ptr->complete_current_battle(false);
-    }
+    const bool abandoned_for_leak = m_multi_copilot_task_ptr->was_abandoned_for_leak();
+    Task.get<OcrTaskInfo>("Copilot@FightMissionFailedStageMapFlag-Retry")->text = {
+        m_multi_copilot_task_ptr->current_stage_name(),
+    };
 
     ProcessTask settlement(*this, { "Copilot@WaitUntilEndOfAction-Retry" });
     settlement.set_retry_times(0);
     if (!settlement.run()) {
+        if (abandoned_for_leak) {
+            Log.warn("MultiCopilot leak settlement was not recognized; continue with fallback");
+            ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run();
+            return m_multi_copilot_task_ptr->complete_current_battle(false);
+        }
         return false;
     }
 
     const auto& result = settlement.get_last_task_name();
-    const bool three_stars = result == "Copilot@StageDrops-Retry-Stars-3" ||
-                             result == "Copilot@StageDrops-Retry-Stars-Adverse";
-    const bool recognized_result = three_stars || result == "Copilot@StageDrops-Retry-Stars-2";
+    const bool three_stars = !abandoned_for_leak &&
+                             (result == "Copilot@StageDrops-Retry-Stars-3" ||
+                              result == "Copilot@StageDrops-Retry-Stars-Adverse");
+    const bool failed = result == "Copilot@FightMissionFailedStageFlag-Retry" ||
+                        result == "Copilot@FightMissionFailedStageMapFlag-Retry";
+    const bool recognized_result = three_stars || result == "Copilot@StageDrops-Retry-Stars-2" || failed;
     if (!recognized_result) {
         Log.error("MultiCopilot settlement result is unknown", result);
+        if (abandoned_for_leak) {
+            ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run();
+            return m_multi_copilot_task_ptr->complete_current_battle(false);
+        }
         return false;
     }
 
-    if (!ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run()) {
+    if (abandoned_for_leak) {
+        if (!failed &&
+            !ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run()) {
+            Log.warn("MultiCopilot could not leave leak settlement; continue with fallback");
+        }
+        return m_multi_copilot_task_ptr->complete_current_battle(false);
+    }
+
+    if (!failed && !ProcessTask(*this, { "Copilot@ClickCornerUntilStartButton" }).set_retry_times(20).run()) {
         return false;
     }
     return m_multi_copilot_task_ptr->complete_current_battle(three_stars);
@@ -226,17 +313,7 @@ size_t asst::MultiCopilotTaskPlugin::select_visible_config()
         return current;
     }
 
-    const auto& task = Task.get<OcrTaskInfo>(m_copilot_configs[current].nav_name + "@ClickStageName");
-    std::tuple<int, int, int> threshold_low {
-        task->special_params[0],
-        task->special_params[1],
-        task->special_params[2],
-    };
-    std::tuple<int, int, int> threshold_high {
-        task->special_params[3],
-        task->special_params[4],
-        task->special_params[5],
-    };
+    auto [threshold_low, threshold_high] = get_stage_thresholds(m_copilot_configs[current].nav_name);
     const auto stages = find_stage(image, threshold_low, threshold_high);
 
     for (size_t i = current; i < m_copilot_configs.size(); ++i) {
@@ -265,17 +342,7 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_stage(const std::string& stage_na
     // 模板不存在，使用基于图像分析的 OCR 方案
     Log.info("No stage template available, using image-based OCR for", stage_name);
 
-    const auto& task = Task.get<OcrTaskInfo>(stage_name + "@ClickStageName");
-    std::tuple<int, int, int> threshold_low {
-        task->special_params[0],
-        task->special_params[1],
-        task->special_params[2],
-    };
-    std::tuple<int, int, int> threshold_high {
-        task->special_params[3],
-        task->special_params[4],
-        task->special_params[5],
-    };
+    auto [threshold_low, threshold_high] = get_stage_thresholds(stage_name);
     auto image = ctrler()->get_image();
     auto stages = find_stage(image, threshold_low, threshold_high);
     auto it = std::ranges::find_if(stages, [&](const OcrPack::Result& r) { return r.text == stage_name; });
@@ -339,17 +406,7 @@ bool asst::MultiCopilotTaskPlugin::navigate_to_visible_stage(const cv::Mat& imag
         return true;
     }
 
-    const auto& task = Task.get<OcrTaskInfo>(stage_name + "@ClickStageName");
-    std::tuple<int, int, int> threshold_low {
-        task->special_params[0],
-        task->special_params[1],
-        task->special_params[2],
-    };
-    std::tuple<int, int, int> threshold_high {
-        task->special_params[3],
-        task->special_params[4],
-        task->special_params[5],
-    };
+    auto [threshold_low, threshold_high] = get_stage_thresholds(stage_name);
     const auto stages = find_stage(image, threshold_low, threshold_high);
     const auto it = std::ranges::find_if(stages, [&](const OcrPack::Result& result) { return result.text == stage_name; });
     if (it == stages.end()) {
@@ -397,6 +454,26 @@ asst::OCRer::ResultsVec asst::MultiCopilotTaskPlugin::find_stage(
     std::erase_if(result, [](const OcrPack::Result& r) { return r.text.size() == 1 || r.score < 0.5; });
     LogInfo << __FUNCTION__ << "stage results:" << result;
     return result;
+}
+
+std::pair<std::tuple<int, int, int>, std::tuple<int, int, int>> asst::MultiCopilotTaskPlugin::get_stage_thresholds(
+    const std::string& stage_name)
+{
+    const auto stage_task = Task.get<OcrTaskInfo>(stage_name + "@ClickStageName");
+    if (stage_task && stage_task->special_params.size() >= 6) {
+        return {
+            { stage_task->special_params[0], stage_task->special_params[1], stage_task->special_params[2] },
+            { stage_task->special_params[3], stage_task->special_params[4], stage_task->special_params[5] }
+        };
+    }
+    const auto base_task = Task.get<OcrTaskInfo>("ClickStageName");
+    if (base_task && base_task->special_params.size() >= 6) {
+        return {
+            { base_task->special_params[0], base_task->special_params[1], base_task->special_params[2] },
+            { base_task->special_params[3], base_task->special_params[4], base_task->special_params[5] }
+        };
+    }
+    return { { 0, 0, 160 }, { 180, 30, 255 } };
 }
 
 bool asst::MultiCopilotTaskPlugin::is_stage_detail_opened(const cv::Mat& image)

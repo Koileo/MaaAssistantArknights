@@ -34,12 +34,14 @@ public:
 
     bool has_pending_config() const { return m_index_current < static_cast<int>(m_copilot_configs.size()); }
     bool was_abandoned_for_leak() const;
+    const std::string& current_stage_name() const;
     bool complete_current_battle(bool three_stars);
 
 private:
     virtual bool _run() override;
     size_t select_visible_config();
     bool navigate_to_chapter_if_needed(const std::string& stage_name);
+    bool navigate_to_resource_if_needed(const std::string& stage_name);
     bool navigate_to_visible_stage(const cv::Mat& image, const std::string& stage_name);
     bool navigate_to_stage(const std::string& stage_name);
     bool enter_stage(const Rect rect, const std::string& stage_name);
@@ -47,6 +49,8 @@ private:
         const cv::Mat& image,
         std::tuple<int, int, int> threshold_low,
         std::tuple<int, int, int> threshold_high);
+    static std::pair<std::tuple<int, int, int>, std::tuple<int, int, int>> get_stage_thresholds(
+        const std::string& stage_name);
     bool is_stage_detail_opened(const cv::Mat& image); // 检查关卡介绍是否已展开
     bool confirm_stage_name(const cv::Mat& image, const std::string& stage_name);
 
@@ -54,6 +58,7 @@ private:
     int m_index_current = 0; // 当前执行的索引
     int m_current_retry = 0;
     std::optional<int> m_current_chapter;
+    std::optional<std::string> m_current_resource_line;
     bool m_switch_copilot_on_failure = false;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;
     std::vector<std::weak_ptr<AbstractTask>> m_cycle_tasks;

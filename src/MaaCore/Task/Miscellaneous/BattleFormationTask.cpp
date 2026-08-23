@@ -140,6 +140,11 @@ bool asst::BattleFormationTask::_run()
             m_used_support_unit = true;
             m_opers_in_formation->emplace(*opt, missing_group->first);
         }
+        else {
+            report_support_unit_unavailable();
+            leave_formation_after_failure();
+            return false;
+        }
         // 再到快速编队页面
         if (!ProcessTask(*this, { "Formation-EnterQuickFormation" }).set_retry_times(3).run()) {
             save_img(utils::path("debug") / utils::path("other"));
@@ -156,6 +161,8 @@ bool asst::BattleFormationTask::_run()
     });
     if (has_missing) {
         report_missing_operators();
+        confirm_selection();
+        leave_formation_after_failure();
         return false;
     }
 
@@ -196,6 +203,11 @@ bool asst::BattleFormationTask::_run()
 
     if (m_support_unit_usage == SupportUnitUsage::Specific && !m_used_support_unit) { // 使用指定助战干员
         m_used_support_unit = add_support_unit({ m_specific_support_unit }).has_value();
+        if (!m_used_support_unit) {
+            report_support_unit_unavailable();
+            leave_formation_after_failure();
+            return false;
+        }
     }
     else if (m_support_unit_usage == SupportUnitUsage::Random && !m_used_support_unit) { // 使用随机助战干员
         m_used_support_unit = add_support_unit().has_value();
@@ -467,6 +479,21 @@ void asst::BattleFormationTask::report_missing_operators()
 
     info["details"] = json::object { { "opers", json::object(oper_names) } };
     callback(AsstMsg::SubTaskError, info);
+}
+
+void asst::BattleFormationTask::report_support_unit_unavailable()
+{
+    json::value info = basic_info_with_what("BattleFormationSupportUnavailable");
+    info["details"]["oper_name"] = m_specific_support_unit.name;
+    callback(AsstMsg::SubTaskExtraInfo, info);
+}
+
+void asst::BattleFormationTask::leave_formation_after_failure()
+{
+    // add_support_unit() has already left the support list. Return once more
+    // from the formation page so the next copilot starts at the stage page.
+    click_return_button();
+    sleep(Config.get_options().task_delay);
 }
 
 bool asst::BattleFormationTask::has_oper_selected(const std::vector<asst::battle::OperUsage>& opers) const

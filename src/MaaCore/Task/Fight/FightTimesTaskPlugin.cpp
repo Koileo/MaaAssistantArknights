@@ -546,15 +546,16 @@ std::optional<int> asst::FightTimesTaskPlugin::analyze_stage_series(const cv::Ma
     LogTraceFunction;
     const auto& task = Task.get("FightSeries-Icon");
 
-    cv::normalize(image, image, 0, 255, cv::NORM_MINMAX);
-    Matcher match(image);
+    cv::Mat norm_image;
+    cv::normalize(image, norm_image, 0, 255, cv::NORM_MINMAX);
+    Matcher match(norm_image);
     match.set_task_info(task);
     if (!match.analyze()) {
         Log.error(__FUNCTION__, "unable to match series icon");
         return std::nullopt;
     }
 
-    RegionOCRer analyzer(image);
+    RegionOCRer analyzer(norm_image);
     analyzer.set_roi(match.get_result().rect.move(task->rect_move));
     analyzer.set_replace(Task.get<OcrTaskInfo>("NumberOcrReplace")->replace_map);
     analyzer.set_bin_threshold(0, 255);
