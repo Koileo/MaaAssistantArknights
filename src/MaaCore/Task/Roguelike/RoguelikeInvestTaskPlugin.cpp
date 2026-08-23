@@ -152,12 +152,21 @@ bool asst::RoguelikeInvestTaskPlugin::_run()
         stop_roguelike();
         return true;
     }
-    if (deposit.value_or(0) == 999 && m_stop_when_full) {
+    if (deposit.value_or(0) < 999) {
+    }
+    else if (m_stop_when_full) {
         Log.info(__FUNCTION__, "存款已满");
         auto cb = basic_info_with_what("RoguelikeInvestmentReachFull");
         callback(AsstMsg::SubTaskExtraInfo, cb);
         stop_roguelike();
         return true;
+    }
+    else if (auto ptr = dynamic_cast<ProcessTask*>(m_task_ptr)) {
+        ptr->set_times_limit("Roguelike@StageTraderInvestSystem", 0);
+        return true;
+    }
+    else {
+        LogError << __FUNCTION__ << "Could not cast m_task_ptr to ProcessTask, unable to set times limit";
     }
 
     return true;
@@ -216,7 +225,8 @@ std::optional<int> asst::RoguelikeInvestTaskPlugin::get_deposit_when_error(const
 
 std::optional<int> asst::RoguelikeInvestTaskPlugin::get_wallet(const cv::Mat& image) const
 {
-    return ocr_count(image, "Roguelike@StageTraderInvest-Wallet");
+    const std::string themed_task = m_config->get_theme() + "@Roguelike@StageTraderInvest-Wallet";
+    return ocr_count(image, Task.get(themed_task) != nullptr ? themed_task : "Roguelike@StageTraderInvest-Wallet");
 }
 
 void asst::RoguelikeInvestTaskPlugin::stop_roguelike() const

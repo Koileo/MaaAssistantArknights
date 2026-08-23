@@ -406,7 +406,18 @@
                                                         DisplayMemberPath="Display"
                                                         ItemsSource="{Binding ScreencapMethodList}"
                                                         SelectedValue="{Binding ScreencapMethod}"
-                                                        SelectedValuePath="Value" />
+                                                        SelectedValuePath="Value">
+                                                        <hc:ComboBox.ItemContainerStyle>
+                                                            <Style BasedOn="{StaticResource ComboBoxItemBaseStyle}" TargetType="{x:Type ComboBoxItem}">
+                                                                <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsEnabled" Value="False">
+                                                                        <Setter Property="Opacity" Value="0.4" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </hc:ComboBox.ItemContainerStyle>
+                                                    </hc:ComboBox>
 
                                                     <hc:ComboBox
                                                         Width="300"
@@ -433,8 +444,8 @@
                                     </ContentControl>
                                 </StackPanel>
 
-                                <!--  截图测试（ADB 模式）  -->
-                                <StackPanel HorizontalAlignment="Center" Visibility="{c:Binding '!IsPCConnectConfig'}">
+                                <!--  截图测试  -->
+                                <StackPanel HorizontalAlignment="Center">
                                     <Button
                                         Height="30"
                                         Margin="5"
@@ -615,7 +626,7 @@
                                                         </ToolTip>
                                                     </RadioButton.ToolTip>
                                                     <RadioButton.ContextMenu>
-                                                        <ContextMenu Width="150">
+                                                        <ContextMenu Width="150" ItemContainerStyle="{StaticResource MaaMenuItemDefaultStyle}">
                                                             <MenuItem Header="{DynamicResource RunTaskOnce}" />
                                                             <MenuItem Header="{DynamicResource Copy}" />
                                                             <MenuItem Header="{DynamicResource Rename}" />
@@ -835,7 +846,7 @@
                                             Cursor="Hand"
                                             NavigateUri="{Binding Source={x:Static constants:MaaUrls.MirrorChyanWebsite}}"
                                             TextDecorations="None">
-                                            <TextBlock Text="{DynamicResource MirrorChyan}" />
+                                            <TextBlock Style="{StaticResource HyperlinkTextBlockStyle}" Text="{DynamicResource MirrorChyan}" />
                                         </Hyperlink>
                                     </controls:TextBlock>
                                 </StackPanel>

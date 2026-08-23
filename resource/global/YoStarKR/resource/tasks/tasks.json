@@ -13,7 +13,7 @@
         "algorithm": "JustReturn",
         "doc": "whether to use old series method"
     },
-    "StartUpNotificationKR": {
+    "StartUpNotification": {
         "action": "ClickSelf",
         "algorithm": "OcrDetect",
         "doc": "This is a task for handling KR-specific announcements (linked StartUpThemes)",
@@ -1169,7 +1169,20 @@
             ["^단$", "断"],
             ["^우$", "友字"],
             ["^식$", "食字"],
-            ["첸더던스트릭", "赤刃明霄陈"]
+            ["첸더던스트릭", "赤刃明霄陈"],
+            ["결속", "牵绊"],
+            ["벨로네", "贝洛内"],
+            ["리프레사", "复奏"],
+            ["시라쿠사 정장", "叙拉古正装"],
+            ["페가수스의 투구", "天马之盔"],
+            ["페가수스의 랜스", "天马之枪"],
+            ["신분인식표", "随身身份牌"],
+            ["카시미어 스포츠 깃발", "卡西米尔竞技旗"],
+            ["패밀리 배지", "家族徽章"],
+            ["간이 통신기", "简易通讯机"],
+            ["기사 저금통", "骑士储蓄罐"],
+            ["기사 계율", "骑士戒律"],
+            ["긴급 차출권", "紧急调度券"]
         ]
     },
     "SwitchAccount@StartUpBegin": {
@@ -1194,7 +1207,7 @@
     "LogoutConfirmOCR": {
         "text": ["확인"],
         "roi": [670, 385, 145, 55],
-        "next": ["SwitchAccount@StartToWakeUp"]
+        "next": ["SwitchAccount@StartUpNotification", "SwitchAccount@StartToWakeUp"]
     },
     "SwitchAccount@StartToWakeUp": {
         "Doc": "YostarUserCenter icon is gone once logged out, so the next list splits on it.",
@@ -1223,7 +1236,7 @@
     },
     "StartUpThemes": {
         "next": [
-            "StartUpNotificationKR",
+            "StartUpNotification",
             "LeidianGoogleFrameworkConfirm",
             "GameStart",
             "StartToWakeUp",
@@ -1274,10 +1287,11 @@
         "text": ["변경"]
     },
     "FightSeries-Opened": {
+        "maskRange": [1, 255],
+        "templThreshold": 0.9,
         "template": "FightSeries-Indicator.png",
         "roi": [940, 190, 80, 380],
-        "templThreshold": 0.9,
-        "maskRange": [1, 255]
+        "method": "Ccoeff"
     },
     "FightSeries-Close": {
         "baseTask": "FightSeries-Icon",
@@ -1849,6 +1863,10 @@
         "templThreshold": 3,
         "templThreshold_Doc": "여기는 문자 간격 임계값으로 사용됩니다",
         "roi": [62, 90, 46, 22]
+    },
+    "NumberOcrReplace": {
+        "Doc": "On some emulator/resolution setups, greyed-out Roguelike recruit cards' level digits exceed the default binarization floor and read as recruitable. Raised it from 140 to 160.",
+        "binThreshold": [160, 255]
     },
     "OperBoxSortTabSelect": {
         "ocrReplace": [["레.?", "레벨"]],

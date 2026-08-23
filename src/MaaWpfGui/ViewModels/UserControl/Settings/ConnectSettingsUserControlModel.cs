@@ -58,6 +58,20 @@ public class ConnectSettingsUserControlModel : PropertyChangedBase
     {
         PropertyDependsOnUtility.InitializePropertyDependencies(this);
 
+        // 鼠标输入方式变化时刷新窗口恢复按钮的可见性
+        if (ConfigFactory.CurrentConfig.Gui.ConnectSettings.Extras.Win32Extra is { } win32Extra)
+        {
+            // 从配置恢复时，刷新截图方式选项的可用状态
+            win32Extra.UpdateScreencapMethodAvailability();
+
+            win32Extra.PropertyChanged += (_, e) => {
+                if (e.PropertyName == nameof(Win32Extra.MouseMethod))
+                {
+                    NotifyOfPropertyChange(nameof(ShowWindowRestoreButton));
+                }
+            };
+        }
+
         // 从配置恢复时，若 MuMu 截图增强已启用，需将 MuMu 触控加入下拉列表
         if (ExtraConfig is MuMu12Extra { Enable: true })
         {
@@ -559,7 +573,10 @@ public class ConnectSettingsUserControlModel : PropertyChangedBase
             case ConnectConfig.MuMuEmulator12:
                 if (ExtraConfig is MuMu12Extra muMu12Extra && muMu12Extra.Enable && ScreencapMethod != "MumuExtras")
                 {
-                    TestLinkInfo = $"{LocalizationHelper.GetString("MuMuExtrasNotEnabledMessage")}\n{ScreencapTestCost}";
+                    var mumuExtrasMsg = string.IsNullOrEmpty(muMu12Extra.EmulatorPath)
+                        ? LocalizationHelper.GetString("MuMuEmulatorPathEmptyError")
+                        : LocalizationHelper.GetString("MuMuExtrasNotEnabledMessage");
+                    TestLinkInfo = $"{mumuExtrasMsg}\n{ScreencapTestCost}";
                     return;
                 }
 
@@ -568,7 +585,10 @@ public class ConnectSettingsUserControlModel : PropertyChangedBase
             case ConnectConfig.LDPlayer:
                 if (ExtraConfig is LDPlayerExtra ldPlayerExtra && ldPlayerExtra.Enable && ScreencapMethod != "LDExtras")
                 {
-                    TestLinkInfo = $"{LocalizationHelper.GetString("LdExtrasNotEnabledMessage")}\n{ScreencapTestCost}";
+                    var ldExtrasMsg = string.IsNullOrEmpty(ldPlayerExtra.EmulatorPath)
+                        ? LocalizationHelper.GetString("LdEmulatorPathEmptyError")
+                        : LocalizationHelper.GetString("LdExtrasNotEnabledMessage");
+                    TestLinkInfo = $"{ldExtrasMsg}\n{ScreencapTestCost}";
                     return;
                 }
 
@@ -825,9 +845,12 @@ public class ConnectSettingsUserControlModel : PropertyChangedBase
     #region AttachWindow (Win32窗口绑定) 配置
 
     /// <summary>
-    /// Gets a value indicating whether to use AttachWindow mode instead of ADB connection.
+    /// Gets a value indicating whether to show the window restore button (PC 端 + SendMessageWithWindowPos 输入方式)。
     /// </summary>
     [PropertyDependsOn(nameof(ConnectConfig))]
+    public bool ShowWindowRestoreButton =>
+        IsPCConnectConfig && ExtraConfig is Win32Extra { MouseMethod: Win32Extra.AsstWin32InputMethod.SendMessageWithWindowPos };
+
     public bool IsPCConnectConfig => ConnectConfig == ConnectConfig.PC;
 
     #endregion
