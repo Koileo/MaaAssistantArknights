@@ -1342,14 +1342,6 @@ bool asst::AdbController::connect(const std::string& adb_path, const std::string
     m_adb.fps = m_conn_ctx.replace_cmd(adb_cfg.fps);
 
     if (m_support_socket && !m_server_started) {
-        std::string bind_address;
-        if (size_t pos = address.rfind(':'); pos != std::string::npos) {
-            bind_address = address.substr(0, pos);
-        }
-        else {
-            bind_address = "127.0.0.1";
-        }
-
         // reference from
         // https://github.com/ArknightsAutoHelper/ArknightsAutoHelper/blob/master/automator/connector/ADBConnector.py#L436
         auto nc_address_ret = call_command(m_conn_ctx.replace_cmd(adb_cfg.nc_address));
@@ -1360,7 +1352,9 @@ bool asst::AdbController::connect(const std::string& adb_path, const std::string
             }
         }
 
-        auto socket_opt = init_socket(bind_address);
+        // The ADB address may belong to a remote device, not a local interface.
+        // Listen on all local interfaces; NcAddress is the device's callback destination.
+        auto socket_opt = init_socket("0.0.0.0");
         if (socket_opt) {
             m_conn_ctx.nc_port = socket_opt.value();
             m_adb.screencap_raw_by_nc = m_conn_ctx.replace_cmd(adb_cfg.screencap_raw_by_nc);
