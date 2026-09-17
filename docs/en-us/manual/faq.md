@@ -32,7 +32,7 @@ Or manually download and install this runtime library to solve the problem:
 
 - A complete MAA software package is named "MAA-`version`-`platform`-`architecture`.zip"; others are "components" that cannot be used independently. Please read carefully.
   In most cases, you need the x64 architecture of MAA, meaning you should download `MAA-*-win-x64.zip`, not `MAA-*-win-arm64.zip`.
-- If you find missing or non-working features after an automatic update, the update process may have had issues. Please download and extract the complete installation package again. After extraction, copy the `config`, `data`, and `debug` folders from your old `MAA` folder into the newly extracted `MAA` folder to keep your existing settings and logs. The `cache` and `achievement` (screenshots) folders are optional to keep.
+- If you find missing or non-working features after an automatic update, the update process may have had issues. When an update fails, MAA will show an update-failure notice on the next launch and offer auto repair (downloading the full package again and installing it after a restart). If that notice was dismissed, the installation may be in a half-updated state; please download and extract the complete installation package again. After extraction, copy the `config`, `data`, and `debug` folders from your old `MAA` folder into the newly extracted `MAA` folder to keep your existing settings and logs. The `cache` and `achievement` (screenshots) folders are optional to keep.
 
 ### Runtime library issues
 
@@ -135,9 +135,9 @@ Emulator updates may overwrite the ADB file. If the issue returns after an updat
 - If you've enabled `Notched Screen UI Adaptation`, set it to 0.
 - If using a non-CN client, first select your client version in `Settings` - `Game Settings` - `Client Type`. Some features may not be fully adapted for non-CN clients; refer to the corresponding documentation.
 - For Integrated Strategy automation, check the [Auto Integrated Strategy documentation](./introduction/integrated-strategy.md) and correctly select the theme in `Auto Integrated Strategy` - `Integrated Strategy Theme`.
-- If auto-combat frequently pauses without deploying operators, disable `Matchstick Mode` in `Settings` - `Operation Settings`.
+- If auto-combat frequently pauses without deploying operators, disable `Pause Trick` in `Settings` - `Game Settings`.
 - If auto-squad formation can't recognize operators correctly, remove special focus from those operators.
-- `Adb Input` touch mode is naturally slow; try switching to other modes for functions like auto-combat.
+- `ADB Input` touch mode is naturally slow; try switching to other modes for functions like auto-combat.
 - When using MuMu Emulator, do NOT set the `Graphics Memory Usage Policy` to `Lower Resource Consumption`.
 
 ### "Screenshot takes too long" message
@@ -152,7 +152,7 @@ Emulator updates may overwrite the ADB file. If the issue returns after an updat
 MAA shouldn't need Windows UAC administrator privileges for any functionality. Current admin-related functions include:
 
 1. `Auto-detect connection`: Administrator rights needed when the target emulator runs as administrator.
-2. `Close emulator when done`: Administrator rights needed when the target emulator runs as administrator.
+2. `Exit Emulator` in `Then`: Administrator rights needed when the target emulator runs as administrator.
 3. `Auto-start MAA at boot`: Cannot be set when running as administrator.
 4. When MAA is incorrectly extracted to paths requiring admin rights for writing, like `C:\` or `C:\Program Files\`.
 

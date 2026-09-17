@@ -34,7 +34,7 @@ asst::CopilotTask::CopilotTask(const AsstCallback& callback, Assistant* inst) :
     m_medicine_task_ptr = std::make_shared<ProcessTask>(callback, inst, TaskType);
     m_medicine_task_ptr->set_tasks({ "BattleStartPre@UseMedicine", "BattleStartPre@BattleQuickFormation" })
         .set_ignore_error(true);
-    m_medicine_task_ptr->register_plugin<MedicineCounterTaskPlugin>()->set_count(999999);
+    m_medicine_task_ptr->register_plugin<MedicineCounterTaskPlugin>()->set_count(999'999);
     m_subtasks.emplace_back(m_medicine_task_ptr);
 
     m_subtasks.emplace_back(m_formation_task_ptr)->set_retry_times(0);
@@ -85,7 +85,7 @@ bool asst::CopilotTask::set_params(const json::value& params)
     auto filename_opt = params.find<std::string>("filename");
     auto multi_tasks_opt = params.find<json::array>("copilot_list"); // 多任务列表
     if (!filename_opt && !multi_tasks_opt) {
-        Log.error("CopilotTask set_params failed, stage_name or filename not found");
+        LogError << __FUNCTION__ << "CopilotTask set_params failed, stage_name or filename not found";
         return false;
     }
 
@@ -171,8 +171,8 @@ bool asst::CopilotTask::set_params(const json::value& params)
             if (name.empty()) {
                 continue;
             }
-            if (BattleData.is_name_invalid(name)) {
-                Log.error(__FUNCTION__, "| User additional oper", name, "is invalid");
+            if (BattleData.is_name_invalid(battle::Role::Unknown, name)) {
+                LogError << __FUNCTION__ << "| User additional oper" << name << "is invalid";
                 json::value info = basic_info_with_what("UserAdditionalOperInvalid");
                 info["details"]["name"] = name;
                 callback(AsstMsg::SubTaskError, info);

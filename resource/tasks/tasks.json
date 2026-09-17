@@ -13,7 +13,7 @@
         "specificRect_Doc": "滑动起点",
         "rectMove": [880, 310, 100, 100],
         "rectMove_Doc": "滑动终点",
-        "specialParams": [200, 1, 2, 0],
+        "specialParams": [200, 1, 37, 1],
         "specialParams_Doc": [
             "滑动 duration",
             "额外滑动？",
@@ -29,7 +29,7 @@
         "postDelay": 200,
         "specificRect": [880, 310, 100, 100],
         "rectMove": [300, 310, 100, 100],
-        "specialParams": [200, 1, 2, 0],
+        "specialParams": [200, 1, 37, 1],
         "next": ["#next"],
         "maxTimes": 50
     },
@@ -39,7 +39,7 @@
         "postDelay": 200,
         "specificRect": [600, 510, 100, 100],
         "rectMove": [600, 0, 100, 100],
-        "specialParams": [200, 1, 2, 0],
+        "specialParams": [200, 1, 37, 1],
         "next": ["#next"],
         "maxTimes": 50
     },
@@ -49,7 +49,7 @@
         "postDelay": 200,
         "specificRect": [600, 145, 100, 100],
         "rectMove": [600, 610, 100, 100],
-        "specialParams": [200, 1, 2, 0],
+        "specialParams": [200, 1, 37, 1],
         "next": ["#next"],
         "maxTimes": 50
     },
@@ -59,7 +59,7 @@
         "postDelay": 100,
         "specificRect": [100, 310, 100, 100],
         "rectMove": [1080, 310, 100, 100],
-        "specialParams": [150, 0, 1, 1],
+        "specialParams": [150],
         "next": ["#next"],
         "maxTimes": 20
     },
@@ -69,7 +69,7 @@
         "postDelay": 100,
         "specificRect": [1080, 310, 100, 100],
         "rectMove": [100, 310, 200, 100],
-        "specialParams": [150, 0, 1, 1],
+        "specialParams": [150],
         "next": ["#next"],
         "maxTimes": 20
     },
@@ -79,7 +79,7 @@
         "postDelay": 350,
         "specificRect": [600, 510, 100, 100],
         "rectMove": [600, 0, 100, 100],
-        "specialParams": [150, 0, 1, 1],
+        "specialParams": [150],
         "next": ["#next"],
         "maxTimes": 20
     },
@@ -89,7 +89,7 @@
         "postDelay": 350,
         "specificRect": [600, 145, 100, 100],
         "rectMove": [600, 610, 100, 100],
-        "specialParams": [150, 0, 1, 1],
+        "specialParams": [150],
         "next": ["#next"],
         "maxTimes": 20
     },
@@ -660,7 +660,7 @@
     "CharsNameOcrReplace": {
         "algorithm": "OcrDetect",
         "text": [],
-        "Doc": "该任务的 ocrReplace 被所有涉及干员名的识别任务复用，中文被拆成3字节处理，需要包括号",
+        "Doc": "该任务的 ocrReplace 被所有涉及干员名的识别任务复用",
         "fullMatch": true,
         "ocrReplace": [
             ["^(?:[<4~]|《|。ぐ)+", ""],
@@ -668,30 +668,30 @@
             ["^\\^一", ""],
             ["^[_<>]*(?=.)", ""],
             ["[_<>]*$", ""],
-            [".*弦惊.*", "“弦惊”"],
+            [".*弦惊[^\\n]*", "“弦惊”"],
             [".*亚梅塔", "菲亚梅塔"],
-            [".*逍遥.*", "“逍遥”"],
-            [".*清平.*", "“清平”"],
-            [".*打字机.*", "“打字机”"],
-            [".*耀阳.*", "“耀阳”"],
-            ["玛恩.*", "玛恩纳"],
-            [".*默德克萨.*", "缄默德克萨斯"],
-            [".*芜拉普兰.*", "荒芜拉普兰德"],
+            [".*逍遥[^\\n]*", "“逍遥”"],
+            [".*清平[^\\n]*", "“清平”"],
+            [".*打字机[^\\n]*", "“打字机”"],
+            [".*耀阳[^\\n]*", "“耀阳”"],
+            ["玛恩[^\\n]*", "玛恩纳"],
+            [".*默德克萨[^\\n]*", "缄默德克萨斯"],
+            [".*芜拉普兰[^\\n]*", "荒芜拉普兰德"],
             ["^持克诺$", "特克诺"],
-            ["^重岳.+", "重岳"],
+            ["^重岳[^\\n]+", "重岳"],
             ["(麒.+夜刀|.*麟.*夜刀)$", "麒麟R夜刀"],
             [".*龙.*黑角$", "火龙S黑角"],
             ["[Uu]-[O0o]f{1,2}icial", "U-Official"],
             [".*威龙陈", "假日威龙陈"],
             ["青积", "青枳"],
-            [".*烬艾雅法.*", "纯烬艾雅法拉"],
+            [".*烬艾雅法[^\\n]*", "纯烬艾雅法拉"],
             ["^[委泰黍]$", "黍"],
             ["^[H夕]$", "夕"],
             ["12E", "12F"],
             ["归.*幽灵鲨", "归溟幽灵鲨"],
-            ["(临六$|^临光.*)", "临光"],
-            [".*甜蜜狂搅.*", "“甜蜜狂搅”"],
-            ["^尖端研究成果共享.*", "尖端研究成果共享终端"],
+            ["(临六$|^临光[^\\n]*)", "临光"],
+            [".*甜蜜狂搅[^\\n]*", "“甜蜜狂搅”"],
+            ["^尖端研究成果共享[^\\n]*", "尖端研究成果共享终端"],
             ["^w$", "W"],
             ["维获", "维荻"],
             [".*ancet-2", "Lancet-2"],
@@ -699,41 +699,45 @@
             ["phonoR-0", "PhonoR-0"],
             [".*HRM-EX$", "THRM-EX"],
             [".*心斯卡蒂$", "浊心斯卡蒂"],
-            ["^预备干员-近.*", "预备干员-近战"],
-            ["^预备干员-术.*", "预备干员-术师"],
-            ["^预备干员-后.*", "预备干员-后勤"],
-            ["^预备干员-狙.*", "预备干员-狙击"],
-            ["^预备干员-重.*", "预备干员-重装"],
-            ["^折光.*", "折光"],
+            ["^预备干员-近[^\\n]*", "预备干员-近战"],
+            ["^预备干员-术[^\\n]*", "预备干员-术师"],
+            ["^预备干员-后[^\\n]*", "预备干员-后勤"],
+            ["^预备干员-狙[^\\n]*", "预备干员-狙击"],
+            ["^预备干员-重[^\\n]*", "预备干员-重装"],
+            ["^折光[^\\n]*", "折光"],
             ["^红集$", "红隼"],
             ["小.?满", "小满"],
-            [".*夹子.*", "“夹子”"],
+            [".*夹子[^\\n]*", "“夹子”"],
             ["应泡普卡", "泡普卡"],
-            ["特米米.+", "特米米"],
-            ["崖心.+", "崖心"],
+            ["特米米[^\\n]+", "特米米"],
+            ["崖心[^\\n]+", "崖心"],
             [".*芙利特$", "伊芙利特"],
             ["^提非$", "提丰"],
             ["^华琳$", "华法琳"],
-            ["^宝箱的肉.*", "宝箱的肉？"],
+            ["^宝箱的肉[^\\n]*", "宝箱的肉？"],
             [".*维多利亚$", "维娜·维多利亚"],
             ["^盥心$", "塑心"],
             ["^(钳|钥)铅$", "钼铅"],
+            ["^墨键$", "黑键"],
+            ["^灰亳$", "灰毫"],
+            ["^野鬘$", "野鬃"],
             [".*NFESS-47$", "CONFESS-47"],
-            ["^焰影苇.*", "焰影苇草"],
-            ["Miss\\.[Cc]hristine", "Miss.Christine"],
+            ["^焰影苇[^\\n]*", "焰影苇草"],
+            ["Miss[.\\-][Cc]hristine", "Miss.Christine"],
             ["^野.{0,2}$", "野鬃"],
             ["^(“|”|\\\\|\")?斩(“|”|\\\\|\")?$", "“斩”"],
             ["八.*海铃", "八幡海铃"],
             [".*英调香师", "撷英调香师"],
-            ["矿石.*杀手.*", "矿石“杀手”"],
+            ["矿石.*杀手[^\\n]*", "矿石“杀手”"],
             [".*涤火杰西卡", "涤火杰西卡"],
-            ["GALLU.*", "GALLUS²"],
+            ["GALLU[^\\n]*", "GALLUS²"],
             ["凯尔希.*思衡托", "凯尔希·思衡托"],
             [".*反壳龟$", "御龙：反壳龟"],
             [".*影丝蛛$", "御龙：影丝蛛"],
             [".*岩甲兽$", "御龙：岩甲兽"],
             [".*雷狼龙$", "御龙：雷狼龙"],
-            ["^折娅$", "折桠"]
+            ["^折娅$", "折桠"],
+            ["^埃[癸类奖突]?斯$", "埃癸斯"]
         ]
     },
     "SwitchAccount@StartUpBegin": {
@@ -1345,17 +1349,41 @@
         "specificRect": [930, 230, 140, 40],
         "rectMove": [930, 520, 140, 40]
     },
+    "SR-TarotClose": {
+        "doc": "月行水上代理结算退出后概率弹出的塔罗牌弹窗，拦截点击；结算退出后先于开始行动关闭，此时无需返还次数",
+        "algorithm": "OcrDetect",
+        "text": ["获得了塔罗牌"],
+        "roi": [580, 280, 180, 60],
+        "action": "ClickRect",
+        "specificRect": [1044, 219, 10, 10],
+        "postDelay": 1000,
+        "next": ["StartButton1"]
+    },
+    "SR-TarotClose-AfterStart": {
+        "doc": "弹窗晚于 ClickCorner 轮询弹出、StartButton1 的点击已被拦截时的兜底；返还 StartButton1 次数并重试",
+        "baseTask": "SR-TarotClose",
+        "reduceOtherTimes": ["StartButton1"]
+    },
+    "PreStartCheck": {
+        "doc": "结算退出后可能存在延迟弹出的界面（如月行水上的塔罗牌弹窗），识别到开始行动后等待界面稳定再执行后续",
+        "baseTask": "StartButton1",
+        "action": "DoNothing",
+        "postDelay": 1000,
+        "exceededNext": [],
+        "reduceOtherTimes": [],
+        "next": ["SR-TarotClose", "StartButton1"]
+    },
     "StartButton1": {
         "doc": "绑定插件调整代理倍率",
         "algorithm": "OcrDetect",
         "action": "ClickSelf",
         "text": ["开始行动", "开始作战", "开始推演"],
-        "preDelay": 500,
         "postDelay": 1000,
         "roi": [1010, 625, 260, 61],
         "exceededNext": ["StageSNReturnFlag", "Stop"],
         "reduceOtherTimes": ["(ClickCornerAfterPRTS+ClickCorner)*10", "PrtsStillLoading*100"],
         "next": [
+            "SR-TarotClose-AfterStart",
             "StartButton2",
             "UseMedicine",
             "UseStone",
@@ -1370,7 +1398,6 @@
         "action": "ClickRect",
         "exceededNext": [],
         "reduceOtherTimes": [],
-        "preDelay": 0,
         "postDelay_Doc": "理智不足时弹出吃药界面约需两秒，理智足够则不到一秒就能进入StartButton2",
         "postDelay": 3000,
         "specificRect_Doc": "避免第二次点击时点到StartButton2",
@@ -1531,7 +1558,7 @@
         "specificRect": [1000, 20, 270, 50],
         "maxTimes": 10,
         "next": [
-            "StartButton1",
+            "PreStartCheck",
             "StartButton2",
             "CheckLevelUp",
             "CheckLevelUpOcr",
@@ -2094,6 +2121,111 @@
         "postDelay": 500,
         "next": ["Stop"]
     },
+    "SignInEventBegin": {
+        "doc": "限时签到活动领取入口，不支持特殊版型",
+        "algorithm": "JustReturn",
+        "sub": ["AwardExpandCheckFlow"],
+        "next": [
+            "SignInEventReturnHome",
+            "SignInEventReturnHome@QuickSwitch@ToHome#next",
+            "SignInEventReturnHome@ReturnButtons#next",
+            "SignInEventEnter",
+            "SignInEventEnterByIcon"
+        ]
+    },
+    "SignInEventReturnHome": {
+        "baseTask": "Home",
+        "action": "DoNothing",
+        "template": "SwitchTheme@ToggleSettingsMenu.png",
+        "next": ["SignInEventEnter", "SignInEventEnterByIcon", "Stop"]
+    },
+    "SignInEventEnter": {
+        "doc": "点击首页左上签到活动入口卡片，OCR 文字优先",
+        "algorithm": "OcrDetect",
+        "text": ["签到"],
+        "action": "ClickSelf",
+        "roi": [5, 21, 203, 258],
+        "postDelay": 1500,
+        "next": ["SignInEventInPopup"],
+        "onErrorNext": ["Stop"]
+    },
+    "SignInEventEnterByIcon": {
+        "doc": "OCR 未命中时（名称过长/截断/缺 override）改用签到日历勾选 icon 兜底，仅亮态、图案跨服通用",
+        "algorithm": "MatchTemplate",
+        "template": "SignInEventEntryIcon.png",
+        "maskRange": [220, 255],
+        "templThreshold": 0.6,
+        "action": "ClickSelf",
+        "roi": [5, 21, 203, 258],
+        "postDelay": 1500,
+        "next": ["SignInEventInPopup"],
+        "onErrorNext": ["Stop"]
+    },
+    "SignInEventInPopup": {
+        "doc": "OCR 结束时间确认已进入弹窗，未进入则退出",
+        "algorithm": "OcrDetect",
+        "text": ["结束时间"],
+        "roi": [0, 560, 1280, 160],
+        "action": "DoNothing",
+        "postDelay": 500,
+        "next": ["SignInEventClaim", "SignInEventAllClaimed"],
+        "onErrorNext": ["SignInEventReturn"]
+    },
+    "SignInEventAllClaimed": {
+        "doc": "匹配已领卡白色对勾，全领完则退出（图案跨服通用）",
+        "algorithm": "MatchTemplate",
+        "template": "SignInEventClaimedCheck.png",
+        "maskRange": [220, 255],
+        "templThreshold": 0.75,
+        "roi": [0, 150, 1280, 400],
+        "action": "DoNothing",
+        "next": ["SignInEventReturn"]
+    },
+    "SignInEventClaim": {
+        "doc": "OCR 卡片 LOGIN 标签定位未领的签到卡，点最左上可领的一天",
+        "algorithm": "OcrDetect",
+        "text": ["LOGIN"],
+        "isAscii": true,
+        "fullMatch": true,
+        "orderBy": "Horizontal",
+        "action": "ClickSelf",
+        "roi": [0, 150, 1280, 250],
+        "postDelay": 2500,
+        "maxTimes": 25,
+        "next": ["SignInEventEarnRewards", "SignInEventCostumeLeave", "SignInEventReturn"],
+        "exceededNext": ["SignInEventReturn"]
+    },
+    "SignInEventEarnRewards": {
+        "doc": "点击获得物资关闭领取动画",
+        "algorithm": "OcrDetect",
+        "text": ["获得物资"],
+        "roi": [440, 90, 400, 140],
+        "action": "ClickSelf",
+        "postDelay": 800,
+        "next": ["#self", "SignInEventClaim", "SignInEventReturn"],
+        "maxTimes": 50,
+        "exceededNext": ["SignInEventReturn"]
+    },
+    "SignInEventCostumeLeave": {
+        "doc": "时装展示挡路页：认右下穿戴衣架 icon 确认在该页，点空白处离开、推进到获得物资",
+        "algorithm": "MatchTemplate",
+        "template": "SignInEventCostumeWear.png",
+        "templThreshold": 0.6,
+        "roi": [1000, 560, 280, 130],
+        "action": "ClickRect",
+        "specificRect": [270, 170, 60, 60],
+        "postDelay": 800,
+        "maxTimes": 15,
+        "next": ["SignInEventEarnRewards", "#self", "SignInEventClaim", "SignInEventReturn"],
+        "exceededNext": ["SignInEventReturn"]
+    },
+    "SignInEventReturn": {
+        "doc": "关闭签到弹窗",
+        "baseTask": "CloseAnno",
+        "template": "CloseAnno.png",
+        "postDelay": 500,
+        "next": ["Stop"]
+    },
     "AwardBegin": {
         "algorithm": "JustReturn",
         "next": [
@@ -2472,6 +2604,360 @@
             "Infrast@OfflineConfirm"
         ]
     },
+    "InfrastInfoMfgLevelMini": {
+        "template": "ManufacturingLevelMini.png",
+        "method": "HSVCount",
+        "colorScales": [
+            [
+                [22, 240, 240],
+                [26, 255, 255]
+            ]
+        ],
+        "colorWithClose": false,
+        "pureColor": true,
+        "rectMove": [102, 14, 35, 27]
+    },
+    "InfrastInfoTradeLevelMini": {
+        "template": "TradeLevelMini.png",
+        "method": "HSVCount",
+        "colorScales": [
+            [
+                [93, 185, 235],
+                [101, 220, 255]
+            ]
+        ],
+        "colorWithClose": false,
+        "pureColor": true,
+        "rectMove": [102, 14, 35, 27]
+    },
+    "InfrastInfoPowerLevelMini": {
+        "template": "PowerLevelMini.png",
+        "method": "HSVCount",
+        "colorScales": [
+            [
+                [36, 130, 235],
+                [43, 180, 255]
+            ]
+        ],
+        "colorWithClose": false,
+        "pureColor": true,
+        "rectMove": [102, 14, 35, 27]
+    },
+    "InfrastInfoDormLevelMini": {
+        "template": "DormLevelMini.png",
+        "method": "HSVCount",
+        "colorScales": [[245, 255]],
+        "colorWithClose": false,
+        "pureColor": true,
+        "rectMove": [64, 13, 50, 28]
+    },
+    "InfrastInfoMiniStationRow1Column1Level1": {
+        "algorithm": "JustReturn",
+        "roi": [193, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第1列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column1Level2": {
+        "algorithm": "JustReturn",
+        "roi": [199, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第1列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column1Level3": {
+        "algorithm": "JustReturn",
+        "roi": [204, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第1列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column2Level1": {
+        "algorithm": "JustReturn",
+        "roi": [345, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第2列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column2Level2": {
+        "algorithm": "JustReturn",
+        "roi": [351, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第2列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column2Level3": {
+        "algorithm": "JustReturn",
+        "roi": [356, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第2列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column3Level1": {
+        "algorithm": "JustReturn",
+        "roi": [497, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第3列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column3Level2": {
+        "algorithm": "JustReturn",
+        "roi": [503, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第3列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow1Column3Level3": {
+        "algorithm": "JustReturn",
+        "roi": [509, 301, 5, 12],
+        "roi_Doc": "最小视图左侧第1行第3列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column1Level1": {
+        "algorithm": "JustReturn",
+        "roi": [118, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第1列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column1Level2": {
+        "algorithm": "JustReturn",
+        "roi": [124, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第1列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column1Level3": {
+        "algorithm": "JustReturn",
+        "roi": [129, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第1列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column2Level1": {
+        "algorithm": "JustReturn",
+        "roi": [271, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第2列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column2Level2": {
+        "algorithm": "JustReturn",
+        "roi": [276, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第2列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column2Level3": {
+        "algorithm": "JustReturn",
+        "roi": [281, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第2列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column3Level1": {
+        "algorithm": "JustReturn",
+        "roi": [421, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第3列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column3Level2": {
+        "algorithm": "JustReturn",
+        "roi": [426, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第3列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow2Column3Level3": {
+        "algorithm": "JustReturn",
+        "roi": [432, 377, 5, 12],
+        "roi_Doc": "最小视图左侧第2行第3列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column1Level1": {
+        "algorithm": "JustReturn",
+        "roi": [193, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第1列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column1Level2": {
+        "algorithm": "JustReturn",
+        "roi": [199, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第1列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column1Level3": {
+        "algorithm": "JustReturn",
+        "roi": [204, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第1列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column2Level1": {
+        "algorithm": "JustReturn",
+        "roi": [346, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第2列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column2Level2": {
+        "algorithm": "JustReturn",
+        "roi": [352, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第2列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column2Level3": {
+        "algorithm": "JustReturn",
+        "roi": [357, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第2列第3级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column3Level1": {
+        "algorithm": "JustReturn",
+        "roi": [496, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第3列第1级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column3Level2": {
+        "algorithm": "JustReturn",
+        "roi": [502, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第3列第2级标记区域"
+    },
+    "InfrastInfoMiniStationRow3Column3Level3": {
+        "algorithm": "JustReturn",
+        "roi": [508, 452, 5, 12],
+        "roi_Doc": "最小视图左侧第3行第3列第3级标记区域"
+    },
+    "InfrastInfoMiniDormRow1Level1": {
+        "algorithm": "JustReturn",
+        "roi": [659, 301, 5, 12],
+        "roi_Doc": "最小视图中部第1间宿舍第1级标记区域"
+    },
+    "InfrastInfoMiniDormRow1Level2": {
+        "algorithm": "JustReturn",
+        "roi": [665, 301, 5, 12],
+        "roi_Doc": "最小视图中部第1间宿舍第2级标记区域"
+    },
+    "InfrastInfoMiniDormRow1Level3": {
+        "algorithm": "JustReturn",
+        "roi": [670, 301, 5, 12],
+        "roi_Doc": "最小视图中部第1间宿舍第3级标记区域"
+    },
+    "InfrastInfoMiniDormRow1Level4": {
+        "algorithm": "JustReturn",
+        "roi": [676, 301, 5, 12],
+        "roi_Doc": "最小视图中部第1间宿舍第4级标记区域"
+    },
+    "InfrastInfoMiniDormRow1Level5": {
+        "algorithm": "JustReturn",
+        "roi": [682, 301, 5, 12],
+        "roi_Doc": "最小视图中部第1间宿舍第5级标记区域"
+    },
+    "InfrastInfoMiniDormRow2Level1": {
+        "algorithm": "JustReturn",
+        "roi": [735, 377, 5, 12],
+        "roi_Doc": "最小视图中部第2间宿舍第1级标记区域"
+    },
+    "InfrastInfoMiniDormRow2Level2": {
+        "algorithm": "JustReturn",
+        "roi": [740, 377, 5, 12],
+        "roi_Doc": "最小视图中部第2间宿舍第2级标记区域"
+    },
+    "InfrastInfoMiniDormRow2Level3": {
+        "algorithm": "JustReturn",
+        "roi": [746, 377, 5, 12],
+        "roi_Doc": "最小视图中部第2间宿舍第3级标记区域"
+    },
+    "InfrastInfoMiniDormRow2Level4": {
+        "algorithm": "JustReturn",
+        "roi": [752, 377, 5, 12],
+        "roi_Doc": "最小视图中部第2间宿舍第4级标记区域"
+    },
+    "InfrastInfoMiniDormRow2Level5": {
+        "algorithm": "JustReturn",
+        "roi": [758, 377, 5, 12],
+        "roi_Doc": "最小视图中部第2间宿舍第5级标记区域"
+    },
+    "InfrastInfoMiniDormRow3Level1": {
+        "algorithm": "JustReturn",
+        "roi": [659, 453, 5, 12],
+        "roi_Doc": "最小视图中部第3间宿舍第1级标记区域"
+    },
+    "InfrastInfoMiniDormRow3Level2": {
+        "algorithm": "JustReturn",
+        "roi": [665, 453, 5, 12],
+        "roi_Doc": "最小视图中部第3间宿舍第2级标记区域"
+    },
+    "InfrastInfoMiniDormRow3Level3": {
+        "algorithm": "JustReturn",
+        "roi": [670, 453, 5, 12],
+        "roi_Doc": "最小视图中部第3间宿舍第3级标记区域"
+    },
+    "InfrastInfoMiniDormRow3Level4": {
+        "algorithm": "JustReturn",
+        "roi": [676, 453, 5, 12],
+        "roi_Doc": "最小视图中部第3间宿舍第4级标记区域"
+    },
+    "InfrastInfoMiniDormRow3Level5": {
+        "algorithm": "JustReturn",
+        "roi": [682, 453, 5, 12],
+        "roi_Doc": "最小视图中部第3间宿舍第5级标记区域"
+    },
+    "InfrastInfoMiniDormRow4Level1": {
+        "algorithm": "JustReturn",
+        "roi": [735, 528, 5, 12],
+        "roi_Doc": "最小视图中部第4间宿舍第1级标记区域"
+    },
+    "InfrastInfoMiniDormRow4Level2": {
+        "algorithm": "JustReturn",
+        "roi": [740, 528, 5, 12],
+        "roi_Doc": "最小视图中部第4间宿舍第2级标记区域"
+    },
+    "InfrastInfoMiniDormRow4Level3": {
+        "algorithm": "JustReturn",
+        "roi": [746, 528, 5, 12],
+        "roi_Doc": "最小视图中部第4间宿舍第3级标记区域"
+    },
+    "InfrastInfoMiniDormRow4Level4": {
+        "algorithm": "JustReturn",
+        "roi": [752, 528, 5, 12],
+        "roi_Doc": "最小视图中部第4间宿舍第4级标记区域"
+    },
+    "InfrastInfoMiniDormRow4Level5": {
+        "algorithm": "JustReturn",
+        "roi": [758, 528, 5, 12],
+        "roi_Doc": "最小视图中部第4间宿舍第5级标记区域"
+    },
+    "InfrastInfoMiniReceptionLevel1": {
+        "algorithm": "JustReturn",
+        "roi": [62, 6, 5, 12],
+        "roi_Doc": "最小视图会客室第1级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniReceptionLevel2": {
+        "algorithm": "JustReturn",
+        "roi": [67, 6, 5, 12],
+        "roi_Doc": "最小视图会客室第2级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniReceptionLevel3": {
+        "algorithm": "JustReturn",
+        "roi": [73, 6, 5, 12],
+        "roi_Doc": "最小视图会客室第3级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniOfficeLevel1": {
+        "algorithm": "JustReturn",
+        "roi": [63, 12, 5, 12],
+        "roi_Doc": "最小视图办公室第1级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniOfficeLevel2": {
+        "algorithm": "JustReturn",
+        "roi": [68, 12, 5, 12],
+        "roi_Doc": "最小视图办公室第2级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniOfficeLevel3": {
+        "algorithm": "JustReturn",
+        "roi": [74, 12, 5, 12],
+        "roi_Doc": "最小视图办公室第3级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniProcessingLevel1": {
+        "algorithm": "JustReturn",
+        "roi": [67, 13, 5, 12],
+        "roi_Doc": "最小视图加工站第1级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniProcessingLevel2": {
+        "algorithm": "JustReturn",
+        "roi": [72, 13, 5, 12],
+        "roi_Doc": "最小视图加工站第2级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniProcessingLevel3": {
+        "algorithm": "JustReturn",
+        "roi": [78, 13, 5, 12],
+        "roi_Doc": "最小视图加工站第3级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniTrainingLevel1": {
+        "algorithm": "JustReturn",
+        "roi": [63, 11, 5, 12],
+        "roi_Doc": "最小视图训练室第1级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniTrainingLevel2": {
+        "algorithm": "JustReturn",
+        "roi": [68, 11, 5, 12],
+        "roi_Doc": "最小视图训练室第2级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoMiniTrainingLevel3": {
+        "algorithm": "JustReturn",
+        "roi": [74, 11, 5, 12],
+        "roi_Doc": "最小视图训练室第3级标记区域（相对于设施匹配区域）"
+    },
+    "InfrastInfoZoomOutPointer0": {
+        "algorithm": "JustReturn",
+        "action": "Swipe",
+        "specificRect": [980, 180, 1, 1],
+        "rectMove": [650, 350, 1, 1]
+    },
+    "InfrastInfoZoomOutPointer1": {
+        "algorithm": "JustReturn",
+        "action": "Swipe",
+        "specificRect": [300, 640, 1, 1],
+        "rectMove": [630, 370, 1, 1]
+    },
     "InfrastLoading": {
         "doc": "等待基建加载画面结束",
         "template": "InfrastPic/InfrastLoading.png",
@@ -2504,6 +2990,8 @@
     "InfrastNotification": {
         "roi": [1100, 0, 180, 300],
         "action": "ClickSelf",
+        "postDelay": 500,
+        "postDelay_Doc": "点开通知面板时基建布局有缩放动画，动画期间点击无效，默认的延迟应该已经够了，多加一点保险",
         "next": ["InfrastReward", "InfrastNotification@LoadingText", "InfrastExitReward"]
     },
     "InfrastReward": {
@@ -2659,18 +3147,8 @@
         "rectMove_Doc": "基于笑脸的位置移动",
         "rectMove": [0, -185, 113, 90]
     },
-    "InfrastSmileyOnRest": {
-        "template": "SmileyOnRest.png",
-        "maskRange": [100, 255],
-        "templThreshold": 0.8
-    },
-    "InfrastSmileyOnWork": {
-        "template": "SmileyOnWork.png",
-        "maskRange": [100, 255],
-        "templThreshold": 0.8
-    },
-    "InfrastSmileyOnDistract": {
-        "template": "SmileyOnDistract.png",
+    "InfrastSmiley": {
+        "template": ["SmileyOnRest.png", "SmileyOnWork.png", "SmileyOnDistract.png"],
         "maskRange": [100, 255],
         "templThreshold": 0.8
     },
@@ -2697,40 +3175,90 @@
         "rectMove": [21, 8, 85, 4]
     },
     "InfrastMfg": {
-        "template": "Manufacturing.png",
-        "templThreshold": 0.9,
-        "maskRange": [1, 255],
+        "doc": "左侧彩色竖条纯色数色，Full 版竖条核心 12x85 仅大图能完整装入，命中即代表当前为大图视图",
+        "template": "PureColorMfg.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [225, 174, 0],
+                [255, 234, 30]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
         "roi": [0, 200, 820, 520]
     },
     "InfrastMfgMini": {
-        "template": "ManufacturingMini.png",
-        "templThreshold": 0.9,
-        "roi": [0, 240, 640, 400],
-        "maskRange": [1, 255]
+        "doc": "纯色核心 8x62 两视图均能装入，Full 未命中时兜底",
+        "template": "PureColorMfgMini.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [225, 174, 0],
+                [255, 234, 30]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
+        "roi": [0, 240, 640, 400]
     },
     "InfrastTrade": {
-        "template": "Trade.png",
-        "templThreshold": 0.9,
-        "maskRange": [1, 255],
+        "template": "PureColorTrade.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [21, 174, 225],
+                [81, 234, 255]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
         "roi": [0, 200, 820, 520]
     },
     "InfrastTradeMini": {
-        "template": "TradeMini.png",
-        "templThreshold": 0.9,
-        "roi": [0, 240, 640, 400],
-        "maskRange": [1, 255]
+        "template": "PureColorTradeMini.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [21, 174, 225],
+                [81, 234, 255]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
+        "roi": [0, 240, 640, 400]
     },
     "InfrastPower": {
-        "template": "Power.png",
-        "maskRange": [1, 255],
-        "roi": [0, 200, 820, 520],
-        "templThreshold": 0.9
+        "template": "PureColorPower.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [174, 225, 72],
+                [234, 255, 132]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
+        "roi": [0, 200, 820, 520]
     },
     "InfrastPowerMini": {
-        "template": "PowerMini.png",
-        "roi": [0, 240, 640, 400],
-        "maskRange": [1, 255],
-        "templThreshold": 0.9
+        "template": "PureColorPowerMini.png",
+        "method": "RGBCount",
+        "pureColor": true,
+        "colorScales": [
+            [
+                [174, 225, 72],
+                [234, 255, 132]
+            ]
+        ],
+        "templThreshold": 0.95,
+        "nmsDistance": 40,
+        "roi": [0, 240, 640, 400]
     },
     "InfrastDorm": {
         "template": "Dorm.png",
@@ -2748,7 +3276,7 @@
         "template": "Office.png",
         "maskRange": [1, 255],
         "roi": [378, 94, 900, 529],
-        "templThreshold": 0.9
+        "templThreshold": 0.95
     },
     "InfrastOfficeMini": {
         "template": "OfficeMini.png",
@@ -2876,6 +3404,98 @@
         "roi": [553, 82, 396, 248],
         "templThreshold": 0.95
     },
+    "InfrastAssistantChangeTask": {
+        "algorithm": "JustReturn",
+        "next": ["InfrastAssistantEnter"]
+    },
+    "InfrastAssistantEnter": {
+        "template": "AssistantEnter.png",
+        "roi": [0, 319, 152, 173],
+        "action": "ClickSelf",
+        "postDelay": 800,
+        "next": ["InfrastAssistantFlag"]
+    },
+    "InfrastAssistantFlag": {
+        "template": "AssistantFlag.png",
+        "roi": [454, 62, 185, 186],
+        "maxTimes": 20,
+        "postDelay": 500
+    },
+    "InfrastAssistantChangeEntry1": {
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [394, 192, 63, 94],
+        "postDelay": 800,
+        "next": ["InfrastAssistantOperatorList"]
+    },
+    "InfrastAssistantChangeEntry2": {
+        "baseTask": "InfrastAssistantChangeEntry1",
+        "specificRect": [152, 484, 63, 94]
+    },
+    "InfrastAssistantChangeEntry3": {
+        "baseTask": "InfrastAssistantChangeEntry1",
+        "specificRect": [313, 484, 63, 94]
+    },
+    "InfrastAssistantChangeEntry4": {
+        "baseTask": "InfrastAssistantChangeEntry1",
+        "specificRect": [473, 484, 63, 94]
+    },
+    "InfrastAssistantChangeEntry5": {
+        "baseTask": "InfrastAssistantChangeEntry1",
+        "specificRect": [634, 484, 63, 94]
+    },
+    "InfrastAssistantOperatorList": {
+        "doc": "以识别到确认按钮作为进入干员列表的标志",
+        "template": "AssistantConfirmButton.png",
+        "roi": [630, 620, 650, 100],
+        "maxTimes": 20,
+        "postDelay": 500
+    },
+    "InfrastAssistantChangeOperator7": {
+        "doc": "任务列表第七个干员位置,也就是第四列第一行",
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [846, 147, 66, 118],
+        "postDelay": 500,
+        "next": ["InfrastAssistantChangeConfirmButtonClick"]
+    },
+    "InfrastAssistantChangeConfirmButtonClick": {
+        "baseTask": "InfrastAssistantOperatorList",
+        "template": "AssistantConfirmButton.png",
+        "action": "ClickSelf",
+        "postDelay": 800,
+        "next": ["InfrastAssistantButtonWait", "InfrastAssistantFlag"]
+    },
+    "InfrastAssistantButtonWait": {
+        "baseTask": "LoadingText",
+        "postDelay": 500,
+        "next": ["InfrastAssistantButtonWait", "InfrastAssistantChangeConfirmButtonClick", "InfrastAssistantFlag"]
+    },
+    "InfrastAssistantChangeOperator2": {
+        "doc": "任务列表第二个干员位置,也就是第一列第二行",
+        "baseTask": "InfrastAssistantChangeOperator7",
+        "specificRect": [402, 418, 70, 120]
+    },
+    "InfrastAssistantChangeOperator3": {
+        "doc": "任务列表第三个干员位置,也就是第二列第一行",
+        "baseTask": "InfrastAssistantChangeOperator7",
+        "specificRect": [558, 144, 70, 120]
+    },
+    "InfrastAssistantChangeOperator4": {
+        "doc": "任务列表第四个干员位置,也就是第二列第二行",
+        "baseTask": "InfrastAssistantChangeOperator7",
+        "specificRect": [558, 418, 70, 120]
+    },
+    "InfrastAssistantChangeOperator5": {
+        "doc": "任务列表第五个干员位置,也就是第三列第一行",
+        "baseTask": "InfrastAssistantChangeOperator7",
+        "specificRect": [703, 149, 70, 120]
+    },
+    "InfrastAssistantChangeOperator6": {
+        "doc": "任务列表第六个干员位置,也就是第三列第二行",
+        "baseTask": "InfrastAssistantChangeOperator7",
+        "specificRect": [704, 424, 70, 120]
+    },
     "InfrastStationedInfo": {
         "algorithm": "OcrDetect",
         "action": "ClickSelf",
@@ -2997,9 +3617,7 @@
         "next": ["InfrastConfirmButtonWait", "Stop"]
     },
     "InfrastConfirmButtonWait": {
-        "algorithm": "OcrDetect",
-        "text": ["正在提交", "反馈至神经"],
-        "roi": [700, 640, 300, 80],
+        "baseTask": "LoadingText",
         "postDelay": 500,
         "next": ["InfrastConfirmButtonWait", "Stop"]
     },
@@ -3018,14 +3636,12 @@
         "next": ["InfrastDormConfirmButtonWait", "InfrastDormDoubleConfirmButton", "Stop"]
     },
     "InfrastDormConfirmButtonWait": {
-        "algorithm": "OcrDetect",
-        "text": ["正在提交", "反馈至神经"],
-        "roi": [700, 640, 300, 80],
+        "baseTask": "LoadingText",
         "postDelay": 500,
         "next": ["InfrastDormConfirmButtonWait", "InfrastDormDoubleConfirmButton", "Stop"]
     },
     "InfrastDormDoubleConfirmButton": {
-        "template": "DormConfirm.png",
+        "template": "InfrastOperConflictConfirm.png",
         "action": "ClickSelf",
         "roi": [630, 620, 650, 100],
         "postDelay": 1000,
@@ -3605,7 +4221,8 @@
         "template": "InfrastOperListTabMoodDoubleClick.png",
         "action": "ClickSelf",
         "roi": [538, 6, 650, 64],
-        "templThreshold": 0.7
+        "templThreshold": 0.7,
+        "postDelay": 500
     },
     "BattleStageName": {
         "algorithm": "OcrDetect",
@@ -3625,19 +4242,19 @@
     "BattleSelectFormation1": {
         "algorithm": "JustReturn",
         "action": "ClickRect",
-        "specificRect": [105, 662, 10, 58]
+        "specificRect": [105, 662, 5, 58]
     },
     "BattleSelectFormation2": {
         "baseTask": "BattleSelectFormation1",
-        "specificRect": [380, 662, 10, 58]
+        "specificRect": [380, 662, 5, 58]
     },
     "BattleSelectFormation3": {
         "baseTask": "BattleSelectFormation1",
-        "specificRect": [650, 662, 10, 58]
+        "specificRect": [650, 662, 5, 58]
     },
     "BattleSelectFormation4": {
         "baseTask": "BattleSelectFormation1",
-        "specificRect": [920, 662, 10, 58]
+        "specificRect": [920, 662, 5, 58]
     },
     "BattleSupportUnitFormation": {
         "action": "ClickSelf",
@@ -3901,7 +4518,7 @@
     "BattleAvatarDialog": {
         "doc": "战斗中带头像对话框, 类似于 SkipThePreBattlePlot(可见于画中人关卡) 的, 但是缺少 跳过 按钮",
         "action": "ClickSelf",
-        "roi": [70, 30, 120, 30],
+        "roi": [70, 30, 150, 500],
         "next": ["BattleAvatarDialog", "Stop"],
         "rectMove": [125, 20, 200, 60]
     },
@@ -4447,16 +5064,16 @@
     },
     "DepotAllTab": {
         "action": "ClickSelf",
-        "roi": [452, 0, 281, 134],
+        "roi": [450, 0, 300, 138],
         "next": ["DepotMaterialTab"]
     },
     "DepotMaterialTab": {
         "action": "ClickSelf",
-        "roi": [1026, 0, 254, 138],
+        "roi": [945, 0, 300, 138],
         "next": ["DepotMaterialTabClicked"]
     },
     "DepotMaterialTabClicked": {
-        "roi": [1026, 0, 254, 138]
+        "roi": [945, 0, 300, 138]
     },
     "InfrastOperListSlowlySwipeToTheRight": {
         "baseTask": "SlowlySwipeToTheRight",
@@ -5421,7 +6038,12 @@
     "Store@Begin": {
         "doc": "绿票、黄票商店",
         "algorithm": "JustReturn",
-        "next": ["Store@EnterStore", "Store@EnterTicketStore"]
+        "next": [
+            "Store@EnterStore",
+            "Store@EnterTicketStore",
+            "Store@Begin@QuickSwitch@ToMall#next",
+            "Store@EnterStore@ReturnButtons#next"
+        ]
     },
     "Store@EnterStore": {
         "baseTask": "Mall",
@@ -5544,7 +6166,7 @@
         "baseTask": "GreenTicket@Store@ClickItem",
         "template": "items/3003.png",
         "detector": "SIFT",
-        "count": 12
+        "count": 8
     },
     "GreenTicket@Store@ChooseMaxAmount": {
         "roi": [1027, 405, 79, 53],

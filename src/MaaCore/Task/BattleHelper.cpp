@@ -16,8 +16,8 @@
 #include "Vision/Battle/BattlefieldClassifier.h"
 #include "Vision/Battle/BattlefieldMatcher.h"
 #include "Vision/Matcher.h"
-#include "Vision/Miscellaneous/OperNameAnalyzer.h"
 #include "Vision/MultiMatcher.h"
+#include "Vision/Oper/OperNameAnalyzer.h"
 #include "Vision/RegionOCRer.h"
 #include <ranges>
 
@@ -460,9 +460,9 @@ bool asst::BattleHelper::deploy_oper(
         oper_point,
         target_point,
         duration,
-        false,
-        swipe_oper_task_ptr->special_params.at(2),
-        swipe_oper_task_ptr->special_params.at(3),
+        SwipeExtraDirection::None,
+        swipe_oper_task_ptr->special_params.at(2) / 10.0,
+        swipe_oper_task_ptr->special_params.at(3) / 10.0,
         deploy_with_pause && depoly_when_pause_not_support);
 
     // 拖动干员朝向
@@ -829,7 +829,7 @@ bool asst::BattleHelper::use_all_ready_skill(const cv::Mat& reusable)
         LogInfo << "Skill" << oper_tag.name << "is ready";
 
         // 识别到了，但点进去发现没有。一般来说是识别错了
-        if (!use_skill(loc, false)) {
+        if (!use_skill(loc, 0)) {
             LogWarn << "Skill" << oper_tag.name << "is not ready";
             static const bool save_infinitely = std::filesystem::exists("DEBUG_skill_ready.txt");
             if (!save_infinitely) {
@@ -884,7 +884,7 @@ bool asst::BattleHelper::check_and_use_skill(const Point& loc, bool& has_error, 
     if (!is_skill_ready(loc, image)) {
         return false;
     }
-    has_error = !use_skill(loc, false);
+    has_error = !use_skill(loc, 0);
     return true;
 }
 

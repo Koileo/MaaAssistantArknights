@@ -2,6 +2,9 @@
 
 #include "Win32Controller.h"
 
+#include <algorithm>
+#include <chrono>
+#include <numeric>
 #include <sstream>
 #include <thread>
 
@@ -12,6 +15,26 @@
 
 namespace asst
 {
+static const char* get_win32_screencap_method_name(Win32ScreencapMethod method)
+{
+    switch (method) {
+    case Win32Screencap::GDI:
+        return "GDI";
+    case Win32Screencap::FramePool:
+        return "FramePool";
+    case Win32Screencap::DXGI_DesktopDup:
+        return "DXGI_DesktopDup";
+    case Win32Screencap::DXGI_DesktopDup_Window:
+        return "DXGI_DesktopDup_Window";
+    case Win32Screencap::PrintWindow:
+        return "PrintWindow";
+    case Win32Screencap::ScreenDC:
+        return "ScreenDC";
+    default:
+        return "Win32";
+    }
+}
+
 Win32Controller::Win32Controller(const AsstCallback& callback, Assistant* inst) :
     InstHelper(inst),
     m_callback(callback),
@@ -45,6 +68,8 @@ bool Win32Controller::attach(
     m_screencap_method = screencap_method;
     m_mouse_method = mouse_method;
     m_keyboard_method = keyboard_method;
+    m_screencap_cost.clear();
+    m_screencap_times = 0;
 
     // 销毁旧的控制单元
     if (m_unit_handle && m_loader) {
@@ -125,9 +150,23 @@ bool Win32Controller::screencap(cv::Mat& image_payload, bool allow_reconnect [[m
     LogTraceFunction;
 
     // 截图前把鼠标移走，避免光标出现在截图中影响识别
+    POINT original_cursor_pos = { 0, 0 };
+    bool cursor_pos_saved = false;
+    bool input_blocked = false;
     if (m_screen_size.second > 0) {
         const bool with_window_pos =
             (m_mouse_method & (Win32Input::SendMessageWithWindowPos | Win32Input::PostMessageWithWindowPos)) != 0;
+        // 仅 WithCursorPos 两种方式挪的是真实光标；Seize 本就强制接管鼠标，纯消息模式不动真实光标
+        const bool moves_real_cursor =
+            (m_main_screen_recognition || !with_window_pos) &&
+            (m_mouse_method & (Win32Input::SendMessageWithCursorPos | Win32Input::PostMessageWithCursorPos)) != 0;
+        if (moves_real_cursor) {
+            // 挪鼠标是孤立 touch_move，没有底层 touch_down 的 BlockInput 保护，这里补上：
+            // 阻塞期间用户输入不产生事件，挪动与还原的写入不会被硬件移动竞争覆盖，与底层触控的还原同机制
+            input_blocked = BlockInput(TRUE) != 0;
+            cursor_pos_saved = GetCursorPos(&original_cursor_pos);
+            Log.trace("Screencap saves cursor position:", original_cursor_pos.x, ",", original_cursor_pos.y);
+        }
         if (m_main_screen_recognition) {
             // 主界面情况下鼠标移动到窗口中心，等待主界面的视差动画，300ms
             unit_touch_move(0, m_screen_size.first / 2, m_screen_size.second / 2, 0);
@@ -152,15 +191,70 @@ bool Win32Controller::screencap(cv::Mat& image_payload, bool allow_reconnect [[m
         }
         else {
             unit_touch_move(0, 0, m_screen_size.second - 1, 0);
+            // 游戏自绘光标跟随真实光标，渲染存在帧延迟，等待其画到挪动终点后再截图，避免光标被截进识别区
+            std::this_thread::sleep_for(std::chrono::milliseconds(34));
         }
     }
 
-    if (!unit_screencap(image_payload)) {
+    const auto start_time = std::chrono::steady_clock::now();
+    const bool ret = unit_screencap(image_payload);
+    const auto cost =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count();
+
+    if (cursor_pos_saved) {
+        if (!SetCursorPos(original_cursor_pos.x, original_cursor_pos.y)) {
+            Log.error("Failed to restore cursor position after screencap, last_error:", GetLastError());
+        }
+    }
+
+    if (input_blocked) {
+        BlockInput(FALSE);
+    }
+
+    if (!ret) {
         return false;
     }
 
     if (m_screen_size.first == 0) {
         m_screen_size = { image_payload.cols, image_payload.rows };
+    }
+
+    const bool is_first_screencap = m_screencap_cost.empty();
+    m_screencap_cost.emplace_back(cost);
+    if (m_screencap_cost.size() > 30) {
+        m_screencap_cost.pop_front();
+    }
+    m_screencap_times = (m_screencap_times + 1) % 10;
+
+    if (is_first_screencap) {
+        json::value info = json::object {
+            { "uuid", m_uuid },
+            { "what", "FastestWayToScreencap" },
+            { "details",
+              json::object {
+                  { "method", get_win32_screencap_method_name(m_screencap_method) },
+                  { "cost", cost },
+              } },
+        };
+        callback(AsstMsg::ConnectionInfo, info);
+    }
+
+    if (is_first_screencap || m_screencap_times == 0) {
+        const auto [min_cost, max_cost] = std::ranges::minmax(m_screencap_cost);
+        const auto avg_cost = std::accumulate(m_screencap_cost.begin(), m_screencap_cost.end(), 0LL) /
+                              static_cast<long long>(m_screencap_cost.size());
+
+        json::value info = json::object {
+            { "uuid", m_uuid },
+            { "what", "ScreencapCost" },
+            { "details",
+              json::object {
+                  { "min", min_cost },
+                  { "avg", avg_cost },
+                  { "max", max_cost },
+              } },
+        };
+        callback(AsstMsg::ConnectionInfo, info);
     }
 
     return true;
@@ -272,7 +366,7 @@ bool Win32Controller::swipe(
     const Point& p1,
     const Point& p2,
     int duration,
-    bool extra_swipe,
+    SwipeExtraDirection extra_swipe,
     double slope_in,
     double slope_out,
     bool with_pause [[maybe_unused]])
@@ -313,7 +407,10 @@ bool Win32Controller::swipe(
     };
 
     auto move_func = [this](int x, int y) {
-        return unit_touch_move(0, x, y, 0);
+        bool ret = unit_touch_move(0, x, y, 0);
+        // Win32 输入（如 Seize 的 SendInput）为异步注入且无内置节拍，不等待会使整段滑动在毫秒级完成，被游戏判定为点击
+        std::this_thread::sleep_for(std::chrono::milliseconds(DefaultSwipeDelay));
+        return ret;
     };
 
     auto do_swipe = [&](int _x1, int _y1, int _x2, int _y2, int _duration) {
@@ -335,9 +432,10 @@ bool Win32Controller::swipe(
         return false;
     }
 
-    if (extra_swipe && opt.minitouch_extra_swipe_duration > 0) {
+    if (extra_swipe != SwipeExtraDirection::None && opt.minitouch_extra_swipe_duration > 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(opt.minitouch_swipe_extra_end_delay));
-        do_swipe(x2, y2, x2, y2 - opt.minitouch_extra_swipe_dist, opt.minitouch_extra_swipe_duration);
+        const auto offset = extra_swipe_offset(extra_swipe, opt.minitouch_extra_swipe_dist);
+        do_swipe(x2, y2, x2 + offset.x, y2 + offset.y, opt.minitouch_extra_swipe_duration);
     }
 
     return unit_touch_up(0);

@@ -155,7 +155,7 @@ bool asst::MinitouchController::swipe(
     const Point& p1,
     const Point& p2,
     int duration,
-    bool extra_swipe,
+    SwipeExtraDirection extra_swipe,
     double slope_in,
     double slope_out,
     bool with_pause)
@@ -251,11 +251,12 @@ bool asst::MinitouchController::swipe(
         return false;
     }
 
-    if (extra_swipe && opt.minitouch_extra_swipe_duration > 0) {
+    if (extra_swipe != SwipeExtraDirection::None && opt.minitouch_extra_swipe_duration > 0) {
         if (!m_minitoucher->wait(opt.minitouch_swipe_extra_end_delay)) {
             return false;
         }
-        if (!minitouch_move(x2, y2, x2, y2 - opt.minitouch_extra_swipe_dist, opt.minitouch_extra_swipe_duration)) {
+        const auto offset = extra_swipe_offset(extra_swipe, opt.minitouch_extra_swipe_dist);
+        if (!minitouch_move(x2, y2, x2 + offset.x, y2 + offset.y, opt.minitouch_extra_swipe_duration)) {
             return false;
         }
     }
@@ -317,6 +318,28 @@ void asst::MinitouchController::clear_info() noexcept
     m_minitouch_props = decltype(m_minitouch_props)();
 }
 
+void asst::MinitouchController::on_display_rotated()
+{
+    LogTraceFunction;
+
+    if (!m_use_maa_touch) {
+        // 重读设备当前方向，避免把旧值写入旋转后的所有坐标换算
+        read_orientation();
+    }
+    call_and_hup_minitouch();
+}
+
+void asst::MinitouchController::read_orientation()
+{
+    std::string orientation_str = call_command(m_conn_ctx.replace_cmd(m_conn_ctx.adb_cfg.orientation)).value_or("");
+    if (!orientation_str.empty()) {
+        char first = orientation_str.front();
+        if (first == '0' || first == '1' || first == '2' || first == '3') {
+            m_minitouch_props.orientation = static_cast<int>(first - '0');
+        }
+    }
+}
+
 bool asst::MinitouchController::probe_minitouch()
 {
     LogTraceFunction;
@@ -336,13 +359,7 @@ bool asst::MinitouchController::probe_minitouch()
                 break;
             }
         }
-        std::string orientation_str = call_command(m_conn_ctx.replace_cmd(adb_cfg.orientation)).value_or("0");
-        if (!orientation_str.empty()) {
-            char first = orientation_str.front();
-            if (first == '0' || first == '1' || first == '2' || first == '3') {
-                m_minitouch_props.orientation = static_cast<int>(first - '0');
-            }
-        }
+        read_orientation();
     }
     Log.info("touch_program", touch_program, "orientation", m_minitouch_props.orientation);
 

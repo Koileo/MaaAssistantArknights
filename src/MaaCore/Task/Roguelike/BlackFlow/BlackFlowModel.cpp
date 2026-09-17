@@ -114,7 +114,7 @@ std::size_t GridPositionHash::operator()(const GridPosition& position) const noe
 
 std::optional<NodeId> make_stable_node_id(int floor, GridPosition position) noexcept
 {
-    if (floor < 0 || floor > 65534) {
+    if (floor < 0 || floor > 65'534) {
         return std::nullopt;
     }
     bool valid = true;
@@ -644,6 +644,11 @@ std::optional<NodeType> node_type_from_string(std::string_view value) noexcept
 bool node_type_allowed(const MovementSpec& movement, NodeType type) noexcept
 {
     return std::ranges::find(movement.target_types, type) != movement.target_types.end();
+}
+
+const std::vector<NodeType>& all_target_node_types() noexcept
+{
+    return AllTargetTypes;
 }
 
 const std::vector<MovementSpec>& movement_specs()

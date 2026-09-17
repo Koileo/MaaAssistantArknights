@@ -45,6 +45,24 @@ std::optional<CultivatedAnimalType> parse_cultivated_animal_type(std::string_vie
     return std::nullopt;
 }
 
+std::string_view baby_animal_profile_for(CultivatedAnimalType target) noexcept
+{
+    switch (target) {
+    case CultivatedAnimalType::FeatheredSerpent:
+    case CultivatedAnimalType::Cerberus:
+        return "baby_animal_floor3";
+    case CultivatedAnimalType::Cat:
+    case CultivatedAnimalType::Dog:
+        break;
+    }
+    return "baby_animal";
+}
+
+bool is_baby_animal_profile(std::string_view profile) noexcept
+{
+    return profile == "baby_animal" || profile == "baby_animal_floor3";
+}
+
 std::optional<CultivatedAnimalType> cultivated_animal_type_from_name(std::string_view name) noexcept
 {
     if (name == "襁褓中的猫") {
@@ -102,63 +120,6 @@ bool has_node_type(const MapSnapshot& map, NodeType type)
         return pair.second.type == type && pair.second.progress != NodeProgress::Removed;
     });
 }
-
-struct StrategyGoals
-{
-    // 声明「达成即收工」的目标节点。它与物理出口取并集，所以端点集合恒非空。
-    std::unordered_set<NodeId> terminal_nodes;
-    // 待锁定的强制目标，按优先级从高到低。前 undemotable_count 条是无条件必达的，阶梯不会降级它们。
-    std::vector<std::string> binding_candidates;
-    std::size_t undemotable_count = 0;
-};
-
-StrategyGoals strategy_goals_for(
-    const ResolvedPolicy& policy,
-    const MissionState& mission,
-    const FactStore& facts,
-    const MapSnapshot& map,
-    int floor)
-{
-    StrategyGoals result;
-    std::vector<const Milestone*> candidates;
-    for (const Milestone& milestone : policy.milestones) {
-        if (!milestone_is_active(milestone, floor, facts, mission)) {
-            continue;
-        }
-        bool has_matching_node = false;
-        for (const auto& [id, node] : map.nodes()) {
-            if (node.progress == NodeProgress::Removed || !milestone_matches_node(milestone, node)) {
-                continue;
-            }
-            has_matching_node = true;
-            if (milestone.terminality == MilestoneTerminality::IsTerminal) {
-                result.terminal_nodes.emplace(id);
-            }
-        }
-        if (!milestone.binding_candidate() || mission.progress(milestone.id) >= milestone.required_count) {
-            continue;
-        }
-        // 目标在本层地图上没有任何匹配节点时，可行性求解一定得出无解。可行则必达的目标直接跳过，
-        // 省掉一次白跑的安全求解；无条件必达的目标仍然送进去，让它按声明把本层判成无解。
-        if (milestone.enforcement == MilestoneEnforcement::FeasibleHard && !has_matching_node) {
-            continue;
-        }
-        candidates.emplace_back(&milestone);
-    }
-    std::ranges::sort(candidates, [](const Milestone* lhs, const Milestone* rhs) {
-        if (lhs->enforcement != rhs->enforcement) {
-            // Hard 排在 FeasibleHard 之前，阶梯从末尾开始降级，因此永远不会降到 Hard。
-            return lhs->enforcement > rhs->enforcement;
-        }
-        return std::tie(lhs->rank, lhs->id) < std::tie(rhs->rank, rhs->id);
-    });
-    for (const Milestone* milestone : candidates) {
-        result.binding_candidates.emplace_back(milestone->id);
-        result.undemotable_count += milestone->enforcement == MilestoneEnforcement::Hard ? 1 : 0;
-    }
-    return result;
-}
-
 } // namespace
 
 json::object BlackFlowStrategyResult::to_json() const
@@ -285,6 +246,17 @@ void BlackFlowSession::set_cultivated_animal_types(std::vector<CultivatedAnimalT
             m_cultivated_animal_types.emplace_back(type);
         }
     }
+
+    // 是否拿到目标动物必须在这里落成事实：培育插件先调本函数、再提交页面结果，而终止规则
+    // 在页面结果提交的末尾求值，此刻写入才赶得上同一拍的结算。进店没能下种时收获为空，
+    // 事实置假，正好落进「培育已了结但没拿到目标」那一条终止规则。
+    const bool obtained =
+        std::find(m_cultivated_animal_types.begin(), m_cultivated_animal_types.end(), m_cultivation_target) !=
+        m_cultivated_animal_types.end();
+    std::string error;
+    if (!set_fact("cultivation_target_obtained", obtained, &error)) {
+        Log.error("BlackFlow cultivation target fact update failed", error);
+    }
 }
 
 void BlackFlowSession::reset_run()
@@ -305,14 +277,14 @@ bool BlackFlowSession::configure_diagnostics(DiagnosticSettings settings, std::s
 
 bool BlackFlowSession::set_fact(std::string_view name, FactValue value, std::string* error)
 {
-    const FactDefinition* definition = BlackFlowStrategy.get_fact_definition(std::string(name));
-    if (definition == nullptr) {
+    const auto definition_opt = BlackFlowStrategy.get_fact_definition(std::string(name));
+    if (!definition_opt.has_value()) {
         if (error != nullptr) {
             *error = "attempted to set unknown strategy fact: " + std::string(name);
         }
         return false;
     }
-    return m_facts.set(definition->scope, std::string(name), std::move(value), error);
+    return m_facts.set(definition_opt->get().scope, std::string(name), std::move(value), error);
 }
 
 bool BlackFlowSession::synchronize_resource_facts(std::string* error)
@@ -325,8 +297,9 @@ bool BlackFlowSession::synchronize_resource_facts(std::string* error)
         { "sellable_scraps", m_run.resources.sellable_scraps },
         { "white_model_bird_count", m_run.resources.white_model_birds },
         { "painted_liberi_owned", m_run.resources.painted_liberi ? 1 : 0 },
-        { "persistent_long_range_count", m_resources.read("persistent_long_range_movement", m_run).value_or(0) },
         { "persistent_full_map_count", m_resources.read("persistent_full_map_movement", m_run).value_or(0) },
+        { "persistent_reach_scrap_shop_count", m_resources.read("persistent_reach_scrap_shop", m_run).value_or(0) },
+        { "persistent_reach_battle_boss_count", m_resources.read("persistent_reach_battle_boss", m_run).value_or(0) },
     };
     for (const auto& [name, value] : values) {
         if (name == "painted_liberi_owned") {
@@ -459,14 +432,14 @@ void BlackFlowSession::evaluate_terminal_rules()
         if (!rule.when.evaluate(facts)) {
             continue;
         }
-        const int cultivated =
-            static_cast<int>(std::clamp<std::int64_t>(integer_fact(facts, "cultivated_animals"), 0, 3));
+        const int cultivated = static_cast<int>(
+            std::clamp<std::int64_t>(integer_fact(facts, "cultivated_animals"), 0, std::numeric_limits<int>::max()));
         BlackFlowStrategyResult result {
             m_profile, rule.outcome, rule.reason, cultivated, rule.succeeded,
         };
         result.next_action =
             rule.next_action.empty() ? (rule.succeeded ? "stop_run" : m_policy->failure_action) : rule.next_action;
-        if (m_profile == "baby_animal" && result.outcome == "baby_cultivation_completed") {
+        if (is_baby_animal_profile(m_profile) && result.outcome == "baby_cultivation_completed") {
             result.cultivation_target = std::string(to_string(m_cultivation_target));
             result.cultivated_animal_types.reserve(m_cultivated_animal_types.size());
             for (const CultivatedAnimalType type : m_cultivated_animal_types) {
@@ -496,8 +469,8 @@ void BlackFlowSession::evaluate_terminal_rules()
 bool BlackFlowSession::apply_observed_facts(const FactStore& facts, std::string* error)
 {
     for (const auto& [name, value] : facts.values()) {
-        const FactDefinition* definition = BlackFlowStrategy.get_fact_definition(name);
-        if (definition == nullptr || definition->scope == FactScope::Candidate) {
+        const auto definition_opt = BlackFlowStrategy.get_fact_definition(name);
+        if (!definition_opt.has_value() || definition_opt->get().scope == FactScope::Candidate) {
             if (error != nullptr) {
                 *error = "observed fact is undeclared or candidate-scoped: " + name;
             }
@@ -1560,10 +1533,17 @@ PreviewDisposition BlackFlowSession::accept_preview(MovePreview preview, std::st
         preview.reachability = PreviewReachability::InsufficientActionPoints;
     }
     const PreviewReachability reachability = preview.reachability;
+    const MoveCandidate proposal = m_transaction->proposal();
+    const Node* existing = proposal.target == InvalidNodeId ? nullptr : m_map.snapshot().find_node(proposal.target);
+    if (preview.reachability == PreviewReachability::Reachable && existing != nullptr &&
+        existing->type == NodeType::HideBattle && preview.displayed_type == NodeType::BattleNormal) {
+        preview.displayed_type = existing->type;
+        preview.displayed_name = existing->name;
+        preview.identity_revealed = existing->identity_revealed;
+    }
     if (!m_transaction->record_preview(preview, error)) {
         return PreviewDisposition::Failed;
     }
-    const MoveCandidate proposal = m_transaction->proposal();
     if (m_transaction->stage() == MoveTransactionStage::Cancelled) {
         m_unreachable_actions.emplace(proposal.action_id);
         m_verified_move_arc.reset();
@@ -1598,7 +1578,6 @@ PreviewDisposition BlackFlowSession::accept_preview(MovePreview preview, std::st
     }
 
     bool changed = false;
-    const Node* existing = proposal.target == InvalidNodeId ? nullptr : m_map.snapshot().find_node(proposal.target);
     if (proposal.controllable && existing == nullptr) {
         if (error != nullptr) {
             *error = "preview target disappeared from normalized map";

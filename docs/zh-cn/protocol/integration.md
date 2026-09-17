@@ -192,6 +192,7 @@ B服：`张三`，可输入 `张三`、`张`、`三`
   :::  
   ::: field series  
   @type number
+  @default 1
   @optional
   代理倍率, -1~10。
   <br>
@@ -358,7 +359,7 @@ B服：`张三`，可输入 `张三`、`张`、`三`
 ::: field expedite_times  
 @type number
 @optional
-加急次数，仅在 `expedite` 为 true 时有效。默认无限使用（直到 `times` 达到上限）。  
+加急次数，仅在 `expedite` 为 true 时有效。当前版本已不生效，加急不受次数限制，直至 `times` 达到上限。  
 :::  
 ::: field skip_robot  
 @type boolean
@@ -460,7 +461,7 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 @optional
 换班工作模式。
 <br>
-`0` - `Default`: 默认换班模式，单设施最优解。
+`0` - `Default`: 默认换班模式，自动计算效率较高的设施内及跨设施干员组合。
 <br>
 `10000` - `Custom`: 自定义换班模式，读取用户配置，可参考 [基建排班协议](./base-scheduling-schema.md)。
 <br>
@@ -469,9 +470,11 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 ::: field facility  
 @type array<string>
 @required
-要换班的设施（有序）。不支持运行中设置。
+要换班的设施。不支持运行中设置。
 <br>
-设施名：`Mfg` | `Trade` | `Power` | `Control` | `Reception` | `Office` | `Dorm` | `Processing` | `Training`  
+`mode = 0` 时该数组为启用集合，顺序与重复项不参与调度（换班顺序由算法统一安排）；`mode = 10000` / `20000` 时按数组顺序执行。
+<br>
+设施名：`Mfg` | `Trade` | `Power` | `Control` | `Reception` | `Office` | `Dorm` | `Processing` | `Training` | `AssistantChange`  
 :::  
 ::: field drones  
 @type string
@@ -509,6 +512,44 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 @optional
 是否将宿舍剩余位置填入信赖未满干员。  
 :::  
+::: field fiammetta_targets  
+@type array<string>
+@default ["清流", "可露希尔", "但书"]
+@optional
+菲亚梅塔恢复目标名单，换班开始时会将名单中当前心情最低的干员与菲亚梅塔一同进驻宿舍互换心情。仅 `mode = 0` 且 `fiammetta_recovery_enabled` 为 true 时生效。
+<br>
+选项：`清流` | `可露希尔` | `但书` | `巫恋` | `龙舌兰` | `歌蕾蒂娅`（不在选项内或重复的条目会被忽略）  
+:::  
+::: field fiammetta_recovery_enabled  
+@type boolean
+@default false
+@optional
+是否在换班开始时使用菲亚梅塔为恢复目标恢复心情；关闭时换班将跳过宿舍准备步骤。仅 `mode = 0` 时生效。  
+:::  
+::: field use_pinus_sylvestris  
+@type boolean
+@default false
+@optional
+是否启用 ｢红松骑士团｣ 跨设施组合。仅 `mode = 0` 时生效。  
+:::  
+::: field use_perception_information  
+@type boolean
+@default false
+@optional
+是否启用 ｢感知信息｣ 跨设施组合，优先度高于 ｢人间烟火｣。仅 `mode = 0` 时生效。  
+:::  
+::: field use_worldly_plight  
+@type boolean
+@default false
+@optional
+是否启用 ｢人间烟火｣ 跨设施组合。仅 `mode = 0` 时生效。  
+:::  
+::: field use_abyssal_hunter  
+@type boolean
+@default false
+@optional
+是否启用 ｢深海猎人｣ 跨设施组合。仅 `mode = 0` 时生效，与 ｢红松骑士团｣ 同时启用时两者不会同时参与排班。  
+:::  
 ::: field reception_message_board  
 @type boolean
 @default true
@@ -540,6 +581,12 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 使用配置中的方案序号。不支持运行中设置。
 <br>
 <Badge type="warning" text="仅在 mode = 10000 时生效" />  
+:::  
+::: field continue_training  
+@type boolean
+@default false
+@optional
+训练室是否继续未完成的专精训练。  
 :::  
 ::::
 
@@ -701,6 +748,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 @optional
 领取五周年赠送的月卡奖励。  
 :::  
+::: field name="signinevent" type="boolean" optional default="false"  
+领取限时签到活动奖励（仅支持常见横向版型）。  
+:::  
 ::::
 
 <details>
@@ -714,7 +764,37 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
    "recruit": true,
    "orundum": false,
    "mining": true,
-   "specialaccess": false
+   "specialaccess": false,
+   "signinevent": false
+}
+```
+
+</details>
+
+- `SwitchTheme`  
+   更换游戏主界面主题
+
+:::: field-group  
+::: field enable  
+@type boolean
+@default true
+@optional
+是否启用本任务。  
+:::  
+::: field themes  
+@type string[]
+@required
+候选主题名称列表，需与游戏内主题列表中显示的名称一致；包含多个时每次运行随机选择一个，为空数组时跳过本任务。  
+:::  
+::::
+
+<details>
+<summary>Example</summary>
+
+```json
+{
+   "enable": true,
+   "themes": ["夜间", "银凇"]
 }
 ```
 
@@ -744,7 +824,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 <br>
 `Sarkaz` - 萨卡兹的无终奇语
 <br>
-`JieGarden` - 岁的界园志异  
+`JieGarden` - 岁的界园志异
+<br>
+`BlackFlow` - 黑流树海  
 :::  
 ::: field mode  
 @type number
@@ -756,9 +838,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 <br>
 `1` - 刷源石锭，第一层投资完就退出。
 <br>
-`2` - <Badge type="danger" text="已弃用" /> 兼顾模式 0 与 1，投资过后再退出，没有投资就继续往后打。
+`2` - <Badge type="danger" text="已移除" /> 原兼顾模式 0 与 1，当前版本传入会被拒绝。
 <br>
-`3` - 开发中...
+`3` - <Badge type="danger" text="未开放" /> 传入会被拒绝。
 <br>
 `4` - 凹开局，先在 0 难度下到达第三层后重开，再到指定难度下凹开局奖励，若不为热水壶或希望则回到 0 难度下重新来过；若在 Phantom 主题下则不切换难度，仅在当前难度下尝试到达第三层、重开、凹开局。
 <br>
@@ -767,6 +849,12 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 `6` - 刷月度小队蚊子腿，除了针对模式的适配以外和模式 0 相同。
 <br>
 `7` - 刷深入调查蚊子腿，除了针对模式的适配以外和模式 0 相同。
+<br>
+`10001` - 快速通过第一层；仅适用于 Sarkaz 主题。
+<br>
+`20001` - 刷常乐节点，第一层进洞，找不到需要的节点就重开；仅适用于 JieGarden 主题，需配合 `find_playTime_target`。
+<br>
+`30001` - 刷襁褓动物；仅适用于 BlackFlow 主题。
 :::  
 ::: field squad  
 @type string
@@ -783,19 +871,24 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 ::: field core_char  
 @type string
 @optional
-开局干员名。仅支持单个干员**中文名**，无论区服；若留空或设置为空字符串 `""` 则根据练度自动选择。  
+开局干员名。仅支持单个干员**中文名**，无论区服；若留空或设置为空字符串 `""` 则根据练度自动选择。等价于 `core_char_list` 的第 1 顺位，仅为兼容旧调用方保留。  
+:::  
+::: field core_char_list  
+@type array<object>
+@optional
+开局干员列表。每项为 `{ "name": 干员名, "use_support": 是否借助战 }`，干员名同样仅支持**中文名**，无论区服；按数组顺序对应开局第 1、2、3 次招募，三个位置的干员职业不能相同。招募只在前几页内翻找指定干员，希望消耗低的干员可能因排位靠后而找不到，某位置未招募到指定干员（自有与助战均未刷出）时按默认优先级进行，因此建议将希望消耗高的干员排在前面；与 `core_char` 同传时以本字段为准。  
 :::  
 ::: field use_support  
 @type boolean
 @default false
 @optional
-开局干员是否为助战干员。  
+开局干员是否为助战干员。等价于 `core_char_list` 第 1 顺位的借助战标记，仅为兼容旧调用方保留。  
 :::  
 ::: field use_nonfriend_support  
 @type boolean
 @default false
 @optional
-是否可以是非好友助战干员。仅在 `use_support` 为 true 时有效。  
+是否可以是非好友助战干员。全局开关，作用于所有借助战的开局干员位置。  
 :::  
 ::: field starts_count  
 @type number
@@ -805,9 +898,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 :::  
 ::: field difficulty  
 @type number
-@default 0
+@default -1
 @optional
-指定难度等级。若未解锁难度，则会选择当前已解锁的最高难度。  
+指定难度等级，`-1` 表示不指定难度。若指定难度未解锁，则会选择当前已解锁的最高难度。  
 :::  
 ::: field stop_at_final_boss  
 @type boolean
@@ -950,14 +1043,35 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 烧水时使用的分队, 默认与squad同步, 当squad为空字符串且未指定collectible_mode_squad值时为指挥分队。  
 :::  
 ::: field start_with_seed  
-@type boolean
-@default false
+@type string
 @optional
-使用种子刷钱。
+使用种子刷钱时填入固定种子，留空则不启用。
 <br>
-仅在 Sarkaz 主题，Investment 模式，“点刺成锭分队” or “后勤分队” 时可能为 true。
+仅在 Sarkaz 主题，Investment 模式，“点刺成锭分队” or “后勤分队” 时生效。  
+:::  
+::: field blackflow_strategy  
+@type string
+@optional
+黑流树海主题的策略；留空时按 `mode` 与 `investment_enabled` 推断。
 <br>
-使用固定种子。  
+`baby_animal` - 第一层检查普通商店，第二、三层探索并进入秘境行商培育种子，需配合 `blackflow_cultivation_target`
+<br>
+`investment` - 第一层以战斗次数最少、预计时间最短的完整路线抵达固定普通商店
+<br>
+`burn_with_investment` - 第一层完成投资后尽快抵达第三层，到达即重开
+<br>
+`burn` - 尽快抵达第三层，到达即重开  
+:::  
+::: field blackflow_cultivation_target  
+@type string
+@default swaddled_cat
+@optional
+刷襁褓动物模式的目标。可选值：`swaddled_cat` | `swaddled_feathered_serpent` | `swaddled_dog` | `swaddled_cerberus`；仅在 `blackflow_strategy` 为 `baby_animal` 时使用。  
+:::  
+::: field find_playTime_target  
+@type number
+@optional
+刷常乐节点模式的目标常乐节点。`1` - 令（掷地有声）；`2` - 黍（种因得果）；`3` - 年（三缺一）。仅在主题为 JieGarden 且模式为 20001 时使用，该模式下必填；不填或其他值会导致任务参数设置失败。  
 :::  
 ::::
 
@@ -970,9 +1084,12 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
    "theme": "Sami",
    "mode": 5,
    "squad": "指挥分队",
-   "roles": "取长补短",
-   "core_char": "塑心",
-   "use_support": false,
+   "roles": "稳扎稳打",
+   "core_char_list": [
+      { "name": "维什戴尔", "use_support": true },
+      { "name": "古米", "use_support": false },
+      { "name": "史都华德", "use_support": false }
+   ],
    "use_nonfriend_support": false,
    "starts_count": 3,
    "difficulty": 8,
@@ -1006,7 +1123,7 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
    "deep_exploration_auto_iterate": false,
    "collectible_mode_shopping": false,
    "collectible_mode_squad": "",
-   "start_with_seed": false
+   "start_with_seed": ""
 }
 ```
 
@@ -1083,7 +1200,7 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
   <br>
 - `name`: 干员名，可选，默认值 ""，若留空则忽视此干员
   <br>
-- `skill`: 需要携带的技能，可选，默认值 1；为 1–3 的整数，若不在此范围内则遵从游戏内默认的技能选择  
+- `skill`: 需要携带的技能，可选，默认值 0，即遵从游戏内默认的技能选择；为 1–3 的整数，若不在此范围内也遵从游戏内默认的技能选择  
   :::  
   ::: field add_trust  
   @type boolean
@@ -1198,9 +1315,11 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 单个作业 JSON 的文件路径，绝对、相对路径均可。不支持运行期设置。必选，与 list 二选一。  
 :::  
 ::: field list  
-@type array<string>
+@type array`<object>` | array`<string>`
 @required
-作业 JSON 列表，绝对、相对路径均可。不支持运行期设置。必选，与 filename 二选一。  
+作业列表，不支持运行期设置。必选，与 filename 二选一。
+<br>
+数组元素支持两种形式：对象形式包含 `id`（作业标识，会原样透传至 `CopilotListLoadTaskFileSuccess` 回调）与 `filename`（作业 JSON 文件的路径，绝对、相对路径均可）；也可直接使用作业路径字符串。  
 :::  
 ::::
 
@@ -1307,9 +1426,15 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 :::  
 ::: field tools_to_craft  
 @type array<string>
-@default [&quot;荧光棒&quot;]
+@default []
 @optional
-自动制造的物品，建议填写子串。仅 Tales 主题有效。  
+自动制造的物品，建议填写子串，留空则不制造。仅 Tales 主题的有存档模式（mode = 1）有效。  
+:::  
+::: field clear_store  
+@type boolean
+@default false
+@optional
+任务完成后是否购买（清空）商店商品。仅 Tales 主题的无存档模式（mode = 0）有效。  
 :::  
 ::: field increment_mode  
 @type number
@@ -1415,12 +1540,12 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 @required
 目前仅支持 `"copilot"`。  
 :::  
-::: field subtask  
+::: field subtype  
 @type string
 @required
 子任务类型。
 <br>
-`stage` - 设置关卡名，需要 `"details": { "stage": "xxxx" }`。
+`stage` - 设置关卡名，需要 `"details": { "stage_name": "xxxx" }`。
 <br>
 `start` - 开始作战，无 `details`。
 <br>
@@ -1440,9 +1565,9 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 {
    "enable": true,
    "type": "copilot",
-   "subtask": "stage",
+   "subtype": "stage",
    "details": {
-      "stage": "1-7"
+      "stage_name": "1-7"
    }
 }
 ```
@@ -1483,7 +1608,7 @@ Tag 等级（大于等于 3）和对应的希望招募时限，单位为分钟�
 #### 接口原型
 
 ```cpp
-bool ASSTAPI AsstSetTaskParams(AsstHandle handle, AsstTaskId id, const char* params);
+AsstBool ASSTAPI AsstSetTaskParams(AsstHandle handle, AsstTaskId id, const char* params);
 ```
 
 #### 接口说明
@@ -1492,7 +1617,7 @@ bool ASSTAPI AsstSetTaskParams(AsstHandle handle, AsstTaskId id, const char* par
 
 #### 返回值
 
-- `bool`  
+- `AsstBool`  
    返回是否设置成功
 
 #### 参数说明
@@ -1503,7 +1628,7 @@ bool ASSTAPI AsstSetTaskParams(AsstHandle handle, AsstTaskId id, const char* par
 @required
 实例句柄  
 :::  
-::: field task  
+::: field id  
 @type AsstTaskId
 @required
 任务 ID, `AsstAppendTask` 接口的返回值  
@@ -1521,7 +1646,7 @@ bool ASSTAPI AsstSetTaskParams(AsstHandle handle, AsstTaskId id, const char* par
 #### 接口原型
 
 ```cpp
-bool ASSTAPI AsstSetStaticOption(AsstStaticOptionKey key, const char* value);
+AsstBool ASSTAPI AsstSetStaticOption(AsstStaticOptionKey key, const char* value);
 ```
 
 #### 接口说明
@@ -1530,7 +1655,7 @@ bool ASSTAPI AsstSetStaticOption(AsstStaticOptionKey key, const char* value);
 
 #### 返回值
 
-- `bool`  
+- `AsstBool`  
    返回是否设置成功
 
 #### 参数说明
@@ -1550,14 +1675,31 @@ bool ASSTAPI AsstSetStaticOption(AsstStaticOptionKey key, const char* value);
 
 ##### 键值一览
 
-暂无
+:::: field-group  
+::: field Invalid  
+@type number
+@default 0
+@optional
+无效占位。枚举值：0。  
+:::  
+::: field CpuOCR  
+@type boolean
+@optional
+使用 CPU 进行 OCR。值不参与解析。资源加载后不支持切换。枚举值：1。  
+:::  
+::: field GpuOCR  
+@type string
+@optional
+使用 GPU 进行 OCR。值为 GPU 设备序号（整数），Windows 上也可传 `luid:<十六进制 LUID>`。资源加载后不支持切换。枚举值：2。  
+:::  
+::::
 
 ### `AsstSetInstanceOption`
 
 #### 接口原型
 
 ```cpp
-bool ASSTAPI AsstSetInstanceOption(AsstHandle handle, AsstInstanceOptionKey key, const char* value);
+AsstBool ASSTAPI AsstSetInstanceOption(AsstHandle handle, AsstInstanceOptionKey key, const char* value);
 ```
 
 #### 接口说明
@@ -1566,7 +1708,7 @@ bool ASSTAPI AsstSetInstanceOption(AsstHandle handle, AsstInstanceOptionKey key,
 
 #### 返回值
 
-- `bool`  
+- `AsstBool`  
    返回是否设置成功
 
 #### 参数说明
@@ -1607,7 +1749,7 @@ bool ASSTAPI AsstSetInstanceOption(AsstHandle handle, AsstInstanceOptionKey key,
 @type string
 @default minitouch
 @optional
-触控模式设置。可选值：minitouch | maatouch | adb | MaaFwAdb。默认 minitouch。枚举值：2。  
+触控模式设置。可选值：minitouch | maatouch | adb | MacPlayTools | MaaFwAdb | MumuExtras。默认 minitouch。枚举值：2。  
 :::  
 ::: field DeploymentWithPause  
 @type boolean

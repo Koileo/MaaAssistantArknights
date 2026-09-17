@@ -226,7 +226,7 @@
     "task_results": [
         {
             "task": "BlackFlow@Roguelike@Event-NodeCompleted",
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-InvestmentCompleted",
@@ -237,46 +237,45 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "investment_completed",
                     "value": true
                 },
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "strategy_result_code",
                     "value": "investment_completed"
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BurnCompleted",
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "burn_completed",
                     "value": true
                 },
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "strategy_result_code",
                     "value": "burn_completed"
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@CultivationResult",
             "signals": [
                 {
-                    "kind": "capture_integer",
+                    "kind": "CaptureInteger",
                     "fact": "cultivated_animals",
                     "source": "details.result.text",
-                    "minimum": 0,
-                    "maximum": 3
+                    "minimum": 0
                 }
             ],
-            "result_kind": "intermediate"
+            "result_kind": "Intermediate"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BabyCultivationCompleted",
@@ -287,17 +286,17 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "cultivation_completed",
                     "value": true
                 },
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "strategy_result_code",
                     "value": "baby_cultivation_completed"
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BabyShopChecked",
@@ -308,12 +307,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "shop_seed_checked",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BabyNoSeed",
@@ -324,17 +323,17 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "shop_seed_checked",
                     "value": true
                 },
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "cultivation_completed",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BurnShopDone",
@@ -345,12 +344,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "burn_shop_done",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BabySeedFound",
@@ -361,17 +360,17 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "shop_seed_checked",
                     "value": true
                 },
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "shop_seed_found",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-BasicE2Team",
@@ -381,12 +380,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "basic_e2_team",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-SandtableA",
@@ -396,12 +395,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "sandtable_a",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-SandtableB",
@@ -412,12 +411,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "sandtable_b",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-Ending2Completed",
@@ -427,12 +426,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "ending2_completed",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-Ending3Device",
@@ -442,12 +441,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "ending3_device",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-Ending3Relic",
@@ -457,12 +456,12 @@
             },
             "signals": [
                 {
-                    "kind": "add",
+                    "kind": "Add",
                     "fact": "ending3_relic_count",
                     "value": 1
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-Floor5BossCompleted",
@@ -472,12 +471,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "floor5_boss_completed",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         },
         {
             "task": "BlackFlow@Roguelike@Event-Ending3Completed",
@@ -487,12 +486,12 @@
             },
             "signals": [
                 {
-                    "kind": "set",
+                    "kind": "Set",
                     "fact": "ending3_completed",
                     "value": true
                 }
             ],
-            "result_kind": "page_completed"
+            "result_kind": "PageCompleted"
         }
     ],
     "preview_names": [
@@ -523,10 +522,6 @@
         {
             "text": "先行一步",
             "node_type": "expedition"
-        },
-        {
-            "text": "未知的凶戾",
-            "node_type": "hide_battle"
         },
         {
             "text": "未知的诡秘",

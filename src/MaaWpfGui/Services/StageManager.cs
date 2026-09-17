@@ -329,6 +329,9 @@ public class StageManager
             new() { Display = LocalizationHelper.GetString("MiniGameNameGreenTicketStore"), DisplayKey = "MiniGameNameGreenTicketStore", Value = "GreenTicket@Store@Begin", TipKey = "MiniGameNameGreenTicketStoreTip" },
             new() { Display = LocalizationHelper.GetString("MiniGameNameYellowTicketStore"), DisplayKey = "MiniGameNameYellowTicketStore", Value = "YellowTicket@Store@Begin", TipKey = "MiniGameNameYellowTicketStoreTip" },
             new() { Display = LocalizationHelper.GetString("MiniGameNameRAStore"), DisplayKey = "MiniGameNameRAStore", Value = "RA@Store@Begin", TipKey = "MiniGameNameRAStoreTip" },
+
+            // TODO: 材料合成 UI 入口暂时隐藏，待功能验证完成后恢复。
+            // new() { Display = LocalizationHelper.GetString("MiniGame@MaterialSynthesis"), DisplayKey = "MiniGame@MaterialSynthesis", Value = "MiniGame@MaterialSynthesis@Begin", TipKey = "MiniGame@MaterialSynthesisTip" },
             new() { Display = LocalizationHelper.GetString("MiniGame@SecretFront"), DisplayKey = "MiniGame@SecretFront", Value = "MiniGame@SecretFront", TipKey = "MiniGame@SecretFrontTip" },
         };
 
@@ -356,6 +359,7 @@ public class StageManager
             var tip = token["Tip"]?.ToString();
             var tipKey = token["TipKey"]?.ToString();
             var minimumRequired = token["MinimumRequired"]?.ToString();
+            var activity = token["Activity"]?.ToString();
 
             string finalDisplay = string.Empty;
             if (!string.IsNullOrEmpty(display))
@@ -427,6 +431,7 @@ public class StageManager
                 Tip = tip,
                 TipKey = tipKey,
                 MinimumRequired = minimumRequired,
+                Activity = activity,
                 UtcStartTime = utcStart,
                 UtcExpireTime = utcExpire,
             };
@@ -773,6 +778,19 @@ public class StageManager
             if (!string.IsNullOrEmpty(activity?.StageName) && shownSideStories.Add(activity.StageName))
             {
                 lines.Add($"｢{activity.StageName}｣ {LocalizationHelper.GetString("DaysLeftOpen")}{GetDaysLeftText(activity.UtcExpireTime, now)}");
+
+                var affiliatedGames = _miniGameEntries
+                    .Where(g => g.Activity == activity.StageName && g.BeingOpen)
+                    .ToList();
+                if (affiliatedGames.Count > 0)
+                {
+                    lines.AddRange(affiliatedGames.Select(game => {
+                        var gameName = string.IsNullOrEmpty(game.DisplayKey)
+                            ? game.Display
+                            : (LocalizationHelper.TryGetString(game.DisplayKey, out var loc) ? loc : game.Display);
+                        return $"{LocalizationHelper.GetString("Toolbox")}→{LocalizationHelper.GetString("MiniGame")}→{gameName}";
+                    }));
+                }
             }
 
             // Side story Drop item tips

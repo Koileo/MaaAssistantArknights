@@ -657,6 +657,52 @@ StrategyTerminalRule parse_terminal_rule(const json::value& value)
     return result;
 }
 
+InventoryCleanupPolicy parse_inventory_cleanup_policy(const json::value& value)
+{
+    check_keys(
+        value,
+        { "discard_max_rank",
+          "extra_discards_after_clear",
+          "rescan_after_rank",
+          "max_attempts_per_rank",
+          "discard_priority" },
+        { "discard_max_rank",
+          "extra_discards_after_clear",
+          "rescan_after_rank",
+          "max_attempts_per_rank",
+          "discard_priority" },
+        "inventory cleanup policy");
+    InventoryCleanupPolicy result;
+    result.discard_max_rank = value.at("discard_max_rank").as_integer();
+    result.extra_discards_after_clear = value.at("extra_discards_after_clear").as_integer();
+    result.rescan_after_rank = value.at("rescan_after_rank").as_integer();
+    result.max_attempts_per_rank = value.at("max_attempts_per_rank").as_integer();
+    result.discard_priority = parse_string_array(value, "discard_priority");
+    if (result.discard_priority.empty()) {
+        invalid_config("inventory cleanup discard_priority must not be empty");
+    }
+    const int priority_size = static_cast<int>(result.discard_priority.size());
+    if (result.discard_max_rank < 1 || result.discard_max_rank > priority_size) {
+        invalid_config("inventory cleanup discard_max_rank is out of discard_priority range");
+    }
+    if (result.extra_discards_after_clear < 0 || result.extra_discards_after_clear > priority_size) {
+        invalid_config("inventory cleanup extra_discards_after_clear is out of range");
+    }
+    if (result.rescan_after_rank < 0 || result.rescan_after_rank >= result.discard_max_rank) {
+        invalid_config("inventory cleanup rescan_after_rank is out of discard_max_rank range");
+    }
+    if (result.max_attempts_per_rank < 1) {
+        invalid_config("inventory cleanup max_attempts_per_rank must be positive");
+    }
+    std::unordered_set<std::string> unique_names;
+    for (const std::string& name : result.discard_priority) {
+        if (name.empty() || !unique_names.emplace(name).second) {
+            invalid_config("inventory cleanup discard_priority contains an empty or duplicate name");
+        }
+    }
+    return result;
+}
+
 PolicyProfile parse_profile(const json::value& value)
 {
     check_keys(
@@ -714,15 +760,28 @@ PolicyProfile parse_profile(const json::value& value)
     return result;
 }
 
+// 整条投影路线算出来的候选事实。它们回答的是「按本拍的计划，以后会经过什么」，而计划逐拍
+// 从零重算、从不提交，因此只能当转向依据，不能当许可依据。
+bool is_route_projection_fact(const std::string& name)
+{
+    static const std::unordered_set<std::string> Projection = {
+        "candidate.route_node_types",          "candidate.guaranteed_route_node_types",
+        "candidate.route_has_badged",          "candidate.guaranteed_route_has_badged",
+        "candidate.route_has_badged_incident", "candidate.guaranteed_route_has_badged_incident",
+    };
+    return Projection.contains(name);
+}
+
 void validate_condition(
     const Condition& condition,
     const std::unordered_map<std::string, FactDefinition>& facts,
-    bool allow_candidate)
+    bool allow_candidate,
+    bool allow_route_projection = true)
 {
     if (condition.kind == ConditionKind::All || condition.kind == ConditionKind::Any ||
         condition.kind == ConditionKind::Not) {
         for (const auto& child : condition.children) {
-            validate_condition(child, facts, allow_candidate);
+            validate_condition(child, facts, allow_candidate, allow_route_projection);
         }
         return;
     }
@@ -735,6 +794,12 @@ void validate_condition(
     }
     if (!allow_candidate && definition->second.scope == FactScope::Candidate) {
         invalid_config("non-candidate condition references candidate fact: " + condition.fact);
+    }
+    // 资源预留一旦释放，那一份资源当拍就被花掉，收不回来。拿「以后会经过」去授权一次不可逆的
+    // 消耗，等于把单拍的计划当成了承诺；实测过的后果是留给秘境行商的最后一次长距离移动被用来
+    // 飞别处。释放条件只能看这一步本身。
+    if (!allow_route_projection && is_route_projection_fact(condition.fact)) {
+        invalid_config("resource reserve release condition references a route projection fact: " + condition.fact);
     }
     if (condition.compare == CompareOperator::Exists || condition.compare == CompareOperator::NotExists) {
         return;
@@ -781,7 +846,7 @@ void validate_module(
             invalid_config("resource reserve references unknown resource: " + reserve.resource);
         }
         validate_condition(reserve.active_if, facts, false);
-        validate_condition(reserve.release_if, facts, true);
+        validate_condition(reserve.release_if, facts, true, false);
     }
     for (const auto& milestone : module.milestones) {
         if (!ids.emplace("milestone:" + milestone.id).second) {
@@ -900,10 +965,14 @@ void validate_profile_definition(
 }
 } // namespace
 
-const blackflow::FactDefinition* BlackFlowStrategyConfig::get_fact_definition(const std::string& name) const noexcept
+const std::optional<std::reference_wrapper<const blackflow::FactDefinition>>
+    BlackFlowStrategyConfig::get_fact_definition(const std::string& name) const noexcept
 {
     const auto found = m_facts.find(name);
-    return found == m_facts.end() ? nullptr : &found->second;
+    if (found == m_facts.end()) {
+        return std::nullopt;
+    }
+    return std::cref(found->second);
 }
 
 const blackflow::PolicyModule* BlackFlowStrategyConfig::get_module(const std::string& id) const noexcept
@@ -992,11 +1061,11 @@ bool BlackFlowStrategyConfig::parse(const json::value& json)
 {
     check_keys(
         json,
-        { "schema_version", "resources", "facts", "modules", "profiles" },
-        { "schema_version", "resources", "facts", "modules", "profiles" },
+        { "schema_version", "resources", "facts", "modules", "inventory_cleanup_policy", "profiles" },
+        { "schema_version", "resources", "facts", "modules", "inventory_cleanup_policy", "profiles" },
         "root");
     const int schema_version = json.at("schema_version").as_integer();
-    if (schema_version != 10) {
+    if (schema_version != 14) {
         invalid_config("unsupported schema_version: " + std::to_string(schema_version));
     }
     for (const auto key : { "resources", "facts", "modules", "profiles" }) {
@@ -1062,6 +1131,8 @@ bool BlackFlowStrategyConfig::parse(const json::value& json)
         validate_module(module, facts, resources);
     }
 
+    blackflow::InventoryCleanupPolicy inventory_cleanup_policy =
+        parse_inventory_cleanup_policy(json.at("inventory_cleanup_policy"));
     std::unordered_map<std::string, blackflow::PolicyProfile> profiles;
     for (const auto& value : json.at("profiles").as_array()) {
         auto profile = parse_profile(value);
@@ -1082,6 +1153,7 @@ bool BlackFlowStrategyConfig::parse(const json::value& json)
     m_resources = std::move(resources);
     m_facts = std::move(facts);
     m_modules = std::move(modules);
+    m_inventory_cleanup_policy = std::move(inventory_cleanup_policy);
     m_profiles = std::move(profiles);
     return true;
 }

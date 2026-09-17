@@ -30,7 +30,7 @@ public:
         const Point& p1,
         const Point& p2,
         int duration = 0,
-        bool extra_swipe = false,
+        SwipeExtraDirection extra_swipe = SwipeExtraDirection::None,
         double slope_in = 1,
         double slope_out = 1,
         bool with_pause = false) override;
@@ -47,9 +47,14 @@ public:
 protected:
     virtual std::optional<std::string> reconnect(const std::string& cmd, int64_t timeout, bool recv_by_socket) override;
 
+    virtual void on_display_rotated() override;
+
     bool call_and_hup_minitouch();
 
     bool probe_minitouch();
+
+    // 读取设备当前屏幕方向，仅在输出为 0-3 时更新，失败或解析失败时保留旧值
+    void read_orientation();
 
     bool input_to_minitouch(const std::string& cmd);
     void release_minitouch(bool force = false);

@@ -1,41 +1,33 @@
-## v6.17.0-beta.5
+## v6.18.0-beta.1
 
 ### Highlights
 
-#### 黑流树海肉鸽适配
+#### 一图流练度数据读取
 
-新增适配黑流树海肉鸽，支持刷等级、刷源石锭、刷襁褓动物三个策略。
+设置新增 ｢三方服务｣ 栏，干员识别支持填写一图流 OpenAPI Token 后直接读取一图流保存的练度快照，小工具的干员识别不再需要连接模拟器。相比本地截图识别，一图流数据还可额外获取技能等级、专精等级与模组信息。
 
-#### 启动文件缺失检查
+#### 黑流树海肉鸽增强
 
-启动时比对安装文件完整性，发现文件缺失时提示，并支持从更新源重新下载完整包自动修复。
+零件箱超载时自动丢弃零件，刷襁褓动物策略统一为行进至第三层，未知终止原因时引导前往问题反馈页。
 
-#### 移除掉线重连，通宵挂机改用定时启动
+#### 更新失败自动修复
 
-掉线重连的恢复链状态复杂且维护成本高，已移除；通宵挂机场景请改用定时启动与强制定时启动。
-
-#### 界面过渡动画与操作体验优化
-
-主界面页签、任务链等内容切换加入方向性过渡动画，设置页导航改为平滑滚动；自定义下拉交互统一（点外部关闭、连击保持）。
+更新失败后会拦截任务启动，并在弹窗中提供自动修复，自动下载完整包后在本地安装；暂不修复也可正常进入主界面，通过设置检查更新或拖入本地完整包完成更新。
 
 <details>
 <summary><b>English</b></summary>
 
-#### BlackFlow Roguelike
+#### Operator Recognition via Yituliu OpenAPI
 
-Added support for the BlackFlow (黑流树海) roguelike theme, with the level-farming, Originium Ingot investment, and cultivation strategies.
+A new "Third-Party Services" settings section lets operator recognition read the proficiency snapshot stored on Yituliu via an OpenAPI token, and the toolbox's operator recognition no longer requires a connected emulator. Unlike screenshot recognition, the Yituliu data also includes skill levels, masteries, and module information.
 
-#### Startup File Integrity Check
+#### BlackFlow Roguelike Enhancements
 
-On startup, installed files are now verified against the file list; missing files are reported and can be repaired automatically by re-downloading the full package from the update source.
+Parts are discarded automatically when the parts box is overloaded, the cultivation strategy now consistently advances to the third floor, and unknown terminations guide users to the issue report page.
 
-#### Reconnect Removed in Favor of Scheduled Startup
+#### Auto Repair for Failed Updates
 
-The reconnect-after-disconnect logic has been removed due to the complexity and maintenance cost of restoring the chain state; for overnight sessions, please switch to scheduled startup and forced scheduled startup instead.
-
-#### UI Transition Animations and Interaction Polish
-
-Main tabs and task-chain switching now animate with directional transitions, and settings-page navigation scrolls smoothly; custom dropdown interactions are unified (click outside to close, repeated clicks keep open).
+After a failed update, task startup is blocked and the dialog offers automatic repair, which downloads the full package and installs it locally; postponing the repair still opens the main window normally, where you can check for updates in Settings or drop in a local full package to complete the update.
 
 </details>
 
@@ -44,149 +36,54 @@ Main tabs and task-chain switching now animate with directional transitions, and
 以下是详细内容：
 
 <details open>
-<summary><b>v6.17.0-beta.5 (2026-08-21)</b></summary>
+<summary><b>v6.18.0-beta.1 (2026-09-14)</b></summary>
 
 ### 新增 | New
 
-* 页签切换过渡动画与设置页导航平滑滚动：主界面页签、任务链、常规/高级设置等内容切换加入方向性过渡动画，设置页导航平滑滚动并跟随过渡动画档位 ([#17799](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17799)) @ABA2396
+* 基建换班新增副手换人流程，基建设施列表新增 ｢基建副手｣，可自动更换进驻的副手干员 ([#17943](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17943)) @Lancarus
+* 任务设置新增运行时长上限，到达后自动停止任务 ([#18167](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18167)) @Aliothmoon @ABA2396
+* 设置新增 ｢三方服务｣ 栏（企鹅物流上报设置迁入其中），干员识别支持填写一图流 OpenAPI Token 后改为读取一图流保存的练度快照，小工具的干员识别不再需要连接模拟器，数据更新任务的干员识别在连接模拟器后立即并行拉取，不等待其他任务完成 ([#18187](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18187)) @ABA2396
+* 黑流树海肉鸽零件箱超载时自动丢弃零件 ([#18065](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18065)) @ZiyinLin
+* 界面设置新增 ｢悬停主任务时隐藏操作按钮｣ 选项，隐藏后运行一次/复制/重命名/删除等功能可通过任务右键菜单使用 @ABA2396
+* ProcessTask 新增 override_next 接口，支持运行时覆盖指定任务的 next 列表 ([#18152](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18152)) @status102
+* YostarEN/JP/KR add AssistantConfirm template for the infrast assistant swap flow @Constrat @Manicsteiner @HX3N
 
 ### 改进 | Improved
 
-* 统一自定义下拉控件的开合交互（点外部关闭、连击保持），｢背景设置｣ ｢神秘代码｣ 的文件选择下拉迁移到新 TreeComboBox 控件，并修复弹层滚动导致设置页跳顶 ([#17813](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17813)) @ABA2396
-* YostarEN/JP/KR update MiniGame SPA S2 templates ([#17808](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17808)) @Constrat @Manicsteiner @HX3N
+* SR 关卡导航支持 ｢殡仪堂｣ 二期入口识别 @ABA2396
+* 补充部分干员与技能的基建效率数据 @Lancarus @ABA2396
+* 点击任务列表项的空白区域即可切换到对应任务设置 @ABA2396
+* 周计划跳过任务时提示跳过原因，精简库存保持的跳过提示 @ABA2396
+* 黑流树海肉鸽刷襁褓动物策略统一为行进至第三层 ([#18198](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18198)) @ZiyinLin
+* 优化黑流树海肉鸽的终止原因提示，未知终止时引导前往 ｢设置 - 问题反馈｣ @ABA2396
+* 推理加速启用时若 GPU 驱动信息不可读则输出警告，便于排查加速不生效的问题 @ABA2396
+* 优化任务加载性能，复用 Regex 验证实例避免重复编译 @status102
+* YostarEN/KR preload PA navigation @Constrat @HX3N
 
 ### 修复 | Fix
 
-* 修复从 PC 端切回模拟器需要重启后才能连接 @ABA2396
-* 修复自动战斗部署时未能正确移除目标地块的过往干员 @status102
-* 调整黑流肉鸽 CloseCollectionContinue 判定 ROI 并下调阈值 ([#17779](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17779)) @ZiyinLin @status102
-* 修复像素画英文界面按钮显示不全、切换语言时适配与抖动下拉框内容未实时切换 @ABA2396
-* 可搜索 ComboBox 换源统一由扩展接管，修复肉鸽开局干员中间值写回产生的重复日志并本地化提示 @ABA2396
-* YostarKR update Roguelike@TraderRandomShoppingConfirm template @HX3N
-
-</details>
-
-<details>
-<summary><b>v6.17.0-beta.4 (2026-08-19)</b></summary>
-
-### 改进 | Improved
-
-* 可搜索 ComboBox 启用 UI 虚拟化，减轻肉鸽开局干员等大列表搜索时的卡顿 @ABA2396
-
-### 修复 | Fix
-
-* 修复黑流树海策略完成后无法正确停止并上报、未完成时无法重开下一局的问题 ([#17771](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17771)) @ZiyinLin
-* 修复可搜索 ComboBox 初始化时将已绑定值覆盖为列表第一项，导致肉鸽开局干员重启后被重置的问题 @ABA2396
-* 调整黑流树海左下角放大镜判定方法与阈值，避免部分设备下遇到流程无法继续 @ABA2396
-
-</details>
-
-<details>
-<summary><b>v6.17.0-beta.3 (2026-08-18)</b></summary>
-
-### 新增 | New
-
-* CustomWebhook 预置模板新增企业微信（WeCom）与 ntfy 选项 ([#17695](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17695)) @H2O-MERO
-* 繁中服新增「辭歲行」活动关卡导航，并适配 SSS 10 ｢極寒安保派駐｣ ([#17766](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17766)) @momomochi987 @ABA2396
-
-### 改进 | Improved
-
-* 自动战斗自动编队按干员组最低练度跳过浏览低等级干员，缩短编队耗时 ([#17751](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17751)) @status102
-* YostarKR normalize BlackFlow roguelike terminology and fix mistranslations @HX3N
-
-### 修复 | Fix
-
-* 修复从公招的选择招募时限界面开始自动公招功能，会触发循环操作的问题 @ABA2396
-* 修复可搜索 ComboBox 在语言切换等场景下选项绑定失效、指定材料被清空，以及下拉列表滚轮一次滚到底的问题 ([#17759](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17759)) @status102 @ABA2396
-* 修复自动战斗作业保存时输出多余超时参数、编队反复切换职业的问题 @status102
-* 修复肉鸽开局干员提示无法随界面语言实时切换的问题 @ABA2396
-* YostarKR fix Roguelike recruitment giving up instead of recruiting @HX3N
+* 修复更新失败提示仅首次启动生效、被忽略后不再拦截的问题，现在更新失败后会拦截任务启动，弹窗中提供自动修复，自动下载完整包后在本地安装；暂不修复时可正常进入主界面，通过设置检查更新或拖入本地完整包完成更新 ([#18170](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18170) [#18204](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18204)) @ABA2396
+* 资源损坏或上次更新失败期间，检查更新强制改走完整包，已是最新版本时也会重装同版本完整包；拖入 OTA 增量包会被拒绝并提示改用完整安装包，同版本完整包可直接拖入修复 ([#18215](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18215)) @ABA2396
+* 修复 RunningState 计时器并发操作可能引发空引用异常的问题 ([#18202](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18202)) @ABA2396
+* 修复 Windows 下局域网连接设备时 RawByNc 截图方式不可用的问题 ([#18179](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18179)) @Aliothmoon
+* 修复公招未勾选自动确认 3/4 星招募结果时仍会自动确认的问题 ([#18176](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18176)) @Aliothmoon
+* 修复切换界面语言后设置页过渡动画下拉选项停留旧语言的问题 @ABA2396
+* 外部通知请求日志中的 URL 截断到域名，避免 token 等凭据随日志泄漏 @ABA2396
 
 ### 文档 | Docs
 
-* 肉鸽文档补充黑流树海推荐开局 ([#17753](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17753)) @Rbqwow @ABA2396
+* 更新 Linux 编译教程与设备文档 ([#18184](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18184)) @satgo1546
+* 添加基建排班工具 RIIC.Autos 的相关链接 ([#18033](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18033)) @BrKDDD @Rbqwow
+* 手动更新数据的流程中，将更换主题步骤移至更新数据之后 ([#18173](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18173)) @youzibigg
 
-</details>
+### 其他 | Other
 
-<details>
-<summary><b>v6.17.0-beta.2 (2026-08-18)</b></summary>
-
-### 新增 | New
-
-* 新增适配黑流树海肉鸽，支持 ｢刷等级，快速飞三层｣ ｢刷源石锭，投资完成后自动退出｣ ｢刷襁褓动物｣ 三个策略 ([#17380](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17380)) @DavidWang19 @ZiyinLin @sakevel @status102 @walkerljy @ABA2396
-* 新增启动文件缺失检查，发现安装文件缺失时提示，并支持从更新源重新下载完整包自动修复 ([#17725](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17725)) @ABA2396
-* 奇象巡展发现未收录奇象时发送通知，并简化通知文案 ([#17744](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17744)) @LengmoAngel @ABA2396
-* 自动战斗支持指定职业以区分同名干员，并兼容职业大小写 ([#17544](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17544)) @status102
-* 自动战斗使用技能支持超时参数 ([#17734](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17734)) @status102
-* 库存保持任务支持因理智不足跳过后续任务 ([#17741](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17741)) @ABA2396
-
-### 改进 | Improved
-
-* 移除掉线重连逻辑，恢复链状态复杂且维护成本高；通宵挂机请改用定时启动与强制定时启动 ([#17742](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17742)) @ABA2396
-* 查找干员在职业未知时回退到按名称匹配，避免检索失败 ([#17735](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17735)) @yali-hzy
-* 刷理智代理倍率识别改用 RGB 颜色匹配，提升识别稳定性 ([#17719](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17719)) @status102
-* 保全作业浏览时不自动添加到作业列表 @status102
-* 截图耗时 100ms 以上且未启用截图增强时，补充截图优化建议，并优化截图增强报错与设置指引 @ABA2396
-* 优化启动设置页提示与自动战斗缺少干员时的报错描述 @ABA2396
-* 繁中服补全并调整界园肉鸽通宝权重 ([#16306](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/16306)) @travellerse
-* 繁中服更新界园肉鸽干员管理入口模板 ([#16634](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/16634)) @abmcar
-* 打包时用原生启动器替换 MAA.exe 的 apphost，MAA.exe 被单独移动等文件不完整的情况能给出明确提示，不再误报未安装 .NET ([#17727](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17727)) @ABA2396
-* 切换客户端后断开现有连接 @ABA2396
-
-### 修复 | Fix
-
-* 修复自定义 Webhook 无法通过 Headers 设置 Content-Type 导致通知发送失败的问题，消息体占位符补全 Json 转义 @ABA2396
-* 修复 ｢开始任务：｣ 分隔栏在界面最小化时无法正确添加、Rectangle 无法显示的问题 @ABA2396
-* 修复自动战斗技能用法设置失效、待部署等待干员就绪检测阻塞、非自动编队下预分配失败后重复添加干员数据、编入干员分组算法无法比对等问题 @status102 @yali-hzy
-
-### 文档 | Docs
-
-* 补充会客室取下线索的说明 @ABA2396
-
-</details>
-
-<details>
-<summary><b>v6.17.0-beta.1 (2026-08-14)</b></summary>
-
-### 新增 | New
-
-* 像素画自动填色新增粘贴功能，支持从剪贴板粘贴图片与 4 字以内的文本 ([#17662](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17662) [#17689](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17689)) @H2O-MERO @ABA2396
-* 繁中服启用界园肉鸽 DLC 分队并适配相关参数与 OCR 对照 ([#17705](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17705)) @momomochi987
-* MaaCore 新增扩展 C 接口 `AsstCallerExtra` ([#17701](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17701)) @hguandl
-
-### 改进 | Improved
-
-* 多作业模式下导航名改由 Core 自动从地图数据读取，并新增 `nav_name_override` 参数支持手动覆盖导航识别名 ([#17687](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17687)) @status102 @hguandl
-* PC 端游戏窗口标题按客户端类型解析，连接与结束模拟器支持不同语言的 PC 端，并优化 PC 端相关描述文案 ([#17679](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17679)) @HX3N @ABA2396
-* 显卡兼容性提示在每次开始运行时输出，避免被任务日志刷掉后无法看到 @ABA2396
-* 调整 core 崩溃后和未知异常的错误提示 @ABA2396
-* 为软件更新包下载添加重试 ([#17675](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17675)) @bkzzzz
-* 自动战斗自动编队切换职业时切换回全部职业分类，避免游戏未重置 UI 位置 @status102
-* 繁中服调整部分干员与关卡名称 OCR ([#17703](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17703)) @momomochi987
-* YostarJP OCR fixes ([#17704](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17704)) @Manicsteiner
-* YostarKR update localization with official terminology @HX3N
-
-### 修复 | Fix
-
-* 修复 NotifyIcon 双击间隔为 0 时的启动崩溃 ([#17691](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17691)) @bkzzzz
-* 修复连接配置下拉框打开和滚动时整个页面位移的问题 @ABA2396
-* 修复 MuMu 触控增强等支持划火柴的触控模式下，划火柴模式开关参数未正确传递生效的问题 ([#17652](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17652)) @Rbqwow
-* YostarKR handle startup notification during account switch @HX3N
-
-### 文档 | Docs
-
-* 更新新手入门文档，简化下载安装步骤并说明日志包生成方式 @ABA2396
-* 修正多语言文档错别字，更新作业协议 `nav_name_override` 字段说明 ([#17708](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/17708)) @apricity093 @hguandl
+* 新增本地图片离线识别评估工具（DebugTask 评估原语与 maa_core_eval.py）([#18181](https://github.com/MaaAssistantArknights/MaaAssistantArknights/pull/18181)) @ABA2396 @status102
 
 ### MaaMacGui
 
 #### 新增 | New
 
-* 支持作业集 @hguandl
-* 支持奇象巡展像素画 @hguandl
-
-#### 改进 | Improved
-
-* 调整像素画选项文案 @hguandl
+* 刷理智设置页新增今日关卡小提示 ([#122](https://github.com/MaaAssistantArknights/MaaMacGui/pull/122)) @zhangweijian97
 
 </details>

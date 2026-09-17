@@ -33,6 +33,7 @@ using MaaWpfGui.ViewModels.UserControl.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static MaaWpfGui.Main.AsstProxy;
+using AsstRoguelikeCoreChar = MaaWpfGui.Models.AsstTasks.AsstRoguelikeTask.AsstRoguelikeCoreChar;
 using CultivationTarget = MaaWpfGui.Configuration.Single.MaaTask.RoguelikeBlackFlowCultivationTarget;
 using Mode = MaaWpfGui.Configuration.Single.MaaTask.RoguelikeMode;
 using RoguelikeBoskySubNodeType = MaaWpfGui.Configuration.Single.MaaTask.RoguelikeBoskySubNodeType;
@@ -487,13 +488,35 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     }
 
     /// <summary>
-    /// Gets or sets the roguelike core character.
+    /// 读取指定顺位的开局干员配置项，顺位尚未填写时返回 null。
+    /// </summary>
+    private static RoguelikeTask.RoguelikeStartingOper? GetStartingOper(RoguelikeTask task, int index)
+        => task.StartingOpers.Count > index ? task.StartingOpers[index] : null;
+
+    /// <summary>
+    /// 确保指定顺位的开局干员配置项存在（不足则补齐），返回该项用于写入。
+    /// </summary>
+    private static RoguelikeTask.RoguelikeStartingOper EnsureStartingOper(RoguelikeTask task, int index)
+    {
+        while (task.StartingOpers.Count <= index)
+        {
+            task.StartingOpers.Add(new());
+        }
+
+        return task.StartingOpers[index];
+    }
+
+    private static string GetStartingOperName(RoguelikeTask task, int index)
+        => GetStartingOper(task, index)?.Name ?? string.Empty;
+
+    /// <summary>
+    /// Gets or sets the roguelike core character of the 1st starting position.
     /// </summary>
     public string RoguelikeCoreChar
     {
-        get => GetTaskConfig<RoguelikeTask>().CoreChar;
+        get => GetStartingOperName(GetTaskConfig<RoguelikeTask>(), 0);
         set {
-            if (!SetTaskConfig<RoguelikeTask>(t => t.CoreChar == value, t => t.CoreChar = value))
+            if (!SetTaskConfig<RoguelikeTask>(t => GetStartingOperName(t, 0) == value, t => EnsureStartingOper(t, 0).Name = value))
             {
                 return;
             }
@@ -504,6 +527,24 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
         }
     }
 
+    /// <summary>
+    /// Gets or sets the roguelike core character of the 2nd starting position.
+    /// </summary>
+    public string RoguelikeCoreChar2
+    {
+        get => GetStartingOperName(GetTaskConfig<RoguelikeTask>(), 1);
+        set => SetTaskConfig<RoguelikeTask>(t => GetStartingOperName(t, 1) == value, t => EnsureStartingOper(t, 1).Name = value);
+    }
+
+    /// <summary>
+    /// Gets or sets the roguelike core character of the 3rd starting position.
+    /// </summary>
+    public string RoguelikeCoreChar3
+    {
+        get => GetStartingOperName(GetTaskConfig<RoguelikeTask>(), 2);
+        set => SetTaskConfig<RoguelikeTask>(t => GetStartingOperName(t, 2) == value, t => EnsureStartingOper(t, 2).Name = value);
+    }
+
     [PropertyDependsOn(nameof(RoguelikeTheme))]
     [PropertyDependsOn(typeof(GuiSettingsUserControlModel), nameof(GuiSettingsUserControlModel.Language))]
     public string StartingCoreCharTip => LocalizationHelper.GetString("StartingCoreCharTip") + "\n\n" + RoguelikeThemeTip;
@@ -511,15 +552,19 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     private ObservableCollection<string> _roguelikeCoreCharList = [];
 
     /// <summary>
-    /// Gets the roguelike core character.
+    /// Gets the roguelike core character candidates shared by all starting positions.
     /// </summary>
     public ObservableCollection<string> RoguelikeCoreCharList
     {
         get => _roguelikeCoreCharList;
         private set {
-            if (!string.IsNullOrEmpty(RoguelikeCoreChar) && !value.Contains(RoguelikeCoreChar))
+            // 各顺位当前值不在候选列表时追加，保证已保存的干员名（含别名/手输名）仍可选
+            foreach (var coreChar in new[] { RoguelikeCoreChar, RoguelikeCoreChar2, RoguelikeCoreChar3 })
             {
-                value.Add(RoguelikeCoreChar);
+                if (!string.IsNullOrEmpty(coreChar) && !value.Contains(coreChar))
+                {
+                    value.Add(coreChar);
+                }
             }
 
             SetAndNotify(ref _roguelikeCoreCharList, value);
@@ -685,20 +730,71 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to use support unit.
+    /// Gets or sets a value indicating whether to use support unit for the 1st starting oper.
+    /// 勾选时关闭开局凹直升（两者互斥）。
     /// </summary>
     public bool RoguelikeUseSupportUnit
     {
-        get => GetTaskConfig<RoguelikeTask>().UseSupport;
+        get => GetStartingOper(GetTaskConfig<RoguelikeTask>(), 0)?.UseSupport ?? false;
         set {
             if (value && RoguelikeStartWithEliteTwo && RoguelikeSquadIsProfessional)
             {
                 RoguelikeStartWithEliteTwo = false;
             }
 
-            SetTaskConfig<RoguelikeTask>(t => t.UseSupport == value, t => t.UseSupport = value);
+            SetTaskConfig<RoguelikeTask>(t => (GetStartingOper(t, 0)?.UseSupport ?? false) == value, t => EnsureStartingOper(t, 0).UseSupport = value);
         }
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use support unit for the 2nd starting oper.
+    /// </summary>
+    public bool RoguelikeCoreChar2UseSupport
+    {
+        get => GetStartingOper(GetTaskConfig<RoguelikeTask>(), 1)?.UseSupport ?? false;
+        set => SetTaskConfig<RoguelikeTask>(t => (GetStartingOper(t, 1)?.UseSupport ?? false) == value, t => EnsureStartingOper(t, 1).UseSupport = value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use support unit for the 3rd starting oper.
+    /// </summary>
+    public bool RoguelikeCoreChar3UseSupport
+    {
+        get => GetStartingOper(GetTaskConfig<RoguelikeTask>(), 2)?.UseSupport ?? false;
+        set => SetTaskConfig<RoguelikeTask>(t => (GetStartingOper(t, 2)?.UseSupport ?? false) == value, t => EnsureStartingOper(t, 2).UseSupport = value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the 2nd and 3rd starting core characters are enabled.
+    /// </summary>
+    public bool RoguelikeEnableAdditionalCoreChars
+    {
+        get => GetTaskConfig<RoguelikeTask>().UseAdditionalStartingOpers;
+        set => SetTaskConfig<RoguelikeTask>(t => t.UseAdditionalStartingOpers == value, t => t.UseAdditionalStartingOpers = value);
+    }
+
+    /// <summary>
+    /// Gets the display text of the 1st starting oper's support unit checkbox.
+    /// </summary>
+    [PropertyDependsOn(nameof(RoguelikeCoreChar))]
+    public string RoguelikeUseSupportUnitText => GetUseSupportText(RoguelikeCoreChar, 1);
+
+    /// <summary>
+    /// Gets the display text of the 2nd starting oper's support unit checkbox.
+    /// </summary>
+    [PropertyDependsOn(nameof(RoguelikeCoreChar2))]
+    public string RoguelikeCoreChar2UseSupportText => GetUseSupportText(RoguelikeCoreChar2, 2);
+
+    /// <summary>
+    /// Gets the display text of the 3rd starting oper's support unit checkbox.
+    /// </summary>
+    [PropertyDependsOn(nameof(RoguelikeCoreChar3))]
+    public string RoguelikeCoreChar3UseSupportText => GetUseSupportText(RoguelikeCoreChar3, 3);
+
+    private static string GetUseSupportText(string operName, int position)
+        => LocalizationHelper.GetStringFormat(
+            "RoguelikeUseSupportUnitFormat",
+            string.IsNullOrEmpty(operName) ? LocalizationHelper.GetString($"StartingCoreCharPosition{position}") : operName);
 
     /// <summary>
     /// Gets or sets a value indicating whether can roguelike support unit belong to nonfriend.
@@ -822,12 +918,10 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     /// <summary>
     /// Gets the list of available playtime target options for FindPlaytime mode.
     /// </summary>
-    public ObservableCollection<GenericCombinedData<RoguelikeBoskySubNodeType>> RoguelikeFindPlaytimeTargetList { get; } =
-    [
-        new() { Display = LocalizationHelper.GetString("RoguelikePlaytimeLing"), Value = RoguelikeBoskySubNodeType.Ling },
-        new() { Display = LocalizationHelper.GetString("RoguelikePlaytimeShu"), Value = RoguelikeBoskySubNodeType.Shu },
-        new() { Display = LocalizationHelper.GetString("RoguelikePlaytimeNian"), Value = RoguelikeBoskySubNodeType.Nian },
-    ];
+    public LocalizedObservableList<RoguelikeBoskySubNodeType> RoguelikeFindPlaytimeTargetList { get; } = new(
+        (RoguelikeBoskySubNodeType.Ling, "RoguelikePlaytimeLing"),
+        (RoguelikeBoskySubNodeType.Shu, "RoguelikePlaytimeShu"),
+        (RoguelikeBoskySubNodeType.Nian, "RoguelikePlaytimeNian"));
 
     /// <summary>
     /// Gets or sets the target animal type for BlackFlow cultivation.
@@ -843,14 +937,11 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     /// <summary>
     /// Gets the available BlackFlow cultivation targets.
     /// </summary>
-    public ObservableCollection<GenericCombinedData<CultivationTarget>>
-        RoguelikeBlackFlowCultivationTargetList { get; } =
-    [
-        new() { Display = LocalizationHelper.GetString("RoguelikeBlackFlowCultivationTargetCat"), Value = CultivationTarget.Cat },
-        new() { Display = LocalizationHelper.GetString("RoguelikeBlackFlowCultivationTargetFeatheredSerpent"), Value = CultivationTarget.FeatheredSerpent },
-        new() { Display = LocalizationHelper.GetString("RoguelikeBlackFlowCultivationTargetDog"), Value = CultivationTarget.Dog },
-        new() { Display = LocalizationHelper.GetString("RoguelikeBlackFlowCultivationTargetCerberus"), Value = CultivationTarget.Cerberus },
-    ];
+    public LocalizedObservableList<CultivationTarget> RoguelikeBlackFlowCultivationTargetList { get; } = new(
+        (CultivationTarget.Cat, "RoguelikeBlackFlowCultivationTargetCat"),
+        (CultivationTarget.FeatheredSerpent, "RoguelikeBlackFlowCultivationTargetFeatheredSerpent"),
+        (CultivationTarget.Dog, "RoguelikeBlackFlowCultivationTargetDog"),
+        (CultivationTarget.Cerberus, "RoguelikeBlackFlowCultivationTargetCerberus"));
 
     /// <summary>
     /// Gets a value indicating whether the FindPlaytime target selection should be visible.
@@ -904,11 +995,10 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
         }
     }
 
-    private static string LocalizeBlackFlowProfile(string? profile) => profile switch
-    {
+    private static string LocalizeBlackFlowProfile(string? profile) => profile switch {
         "investment" => LocalizationHelper.GetString("RoguelikeStrategyBlackFlowInvestment"),
         "burn" or "burn_with_investment" => LocalizationHelper.GetString("RoguelikeStrategyBlackFlowExp"),
-        "baby_animal" => LocalizationHelper.GetString("RoguelikeStrategyBlackFlowBabyAnimal"),
+        "baby_animal" or "baby_animal_floor3" => LocalizationHelper.GetString("RoguelikeStrategyBlackFlowBabyAnimal"),
         _ => LocalizationHelper.GetString("BlackFlowStrategyUnknown"),
     };
 
@@ -941,16 +1031,14 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
             return LocalizeBlackFlowIdentifier("BlackFlowMilestone", milestoneId, "BlackFlowDecisionDetailUnknown");
         }
 
-        return details?["reason_detail"]?.ToString() switch
-        {
+        return details?["reason_detail"]?.ToString() switch {
             "selected unclassified frontier probe" => LocalizationHelper.GetString("BlackFlowDecisionProbeUnknownNode"),
             "selected by lexicographic policy order" => LocalizationHelper.GetString("BlackFlowDecisionPolicyOrder"),
             _ => LocalizationHelper.GetString("BlackFlowDecisionDetailUnknown"),
         };
     }
 
-    private static string LocalizeBlackFlowNodeType(string? nodeType) => nodeType switch
-    {
+    private static string LocalizeBlackFlowNodeType(string? nodeType) => nodeType switch {
         "empty" => LocalizationHelper.GetString("BlackFlowNodeEmpty"),
         "battle_normal" or "combat" => LocalizationHelper.GetString("BlackFlowNodeCombat"),
         "battle_elite" or "emergency_combat" => LocalizationHelper.GetString("BlackFlowNodeEmergencyCombat"),
@@ -980,8 +1068,7 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
         _ => LocalizationHelper.GetString("BlackFlowNodeUnknown"),
     };
 
-    private static string LocalizeBlackFlowMilestoneStatus(string? status) => status switch
-    {
+    private static string LocalizeBlackFlowMilestoneStatus(string? status) => status switch {
         "available" => LocalizationHelper.GetString("BlackFlowMilestoneStatusAvailable"),
         "satisfied" => LocalizationHelper.GetString("BlackFlowMilestoneStatusSatisfied"),
         "missed" => LocalizationHelper.GetString("BlackFlowMilestoneStatusMissed"),
@@ -989,8 +1076,7 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
         _ => LocalizationHelper.GetString("BlackFlowMilestoneStatusUnknown"),
     };
 
-    private static string LocalizeBlackFlowStrategyOutcome(string? outcome) => outcome switch
-    {
+    private static string LocalizeBlackFlowStrategyOutcome(string? outcome) => outcome switch {
         "investment_completed" => LocalizationHelper.GetString("BlackFlowOutcomeInvestmentCompleted"),
         "investment_missed" => LocalizationHelper.GetString("BlackFlowOutcomeInvestmentMissed"),
         "burn_completed" => LocalizationHelper.GetString("BlackFlowOutcomeFloor3RouteCompleted"),
@@ -1025,8 +1111,7 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
         _ => LocalizationHelper.GetString("BlackFlowOutcomeUnknown"),
     };
 
-    private static string LocalizeBlackFlowTerminationReason(string? reason) => reason switch
-    {
+    private static string LocalizeBlackFlowTerminationReason(string? reason) => reason switch {
         "investment_finished" => LocalizationHelper.GetString("BlackFlowTerminationInvestmentFinished"),
         "investment_shop_window_closed" => LocalizationHelper.GetString("BlackFlowTerminationInvestmentShopWindowClosed"),
         "third_floor_reached" => LocalizationHelper.GetString("BlackFlowTerminationFloor3Reached"),
@@ -1176,8 +1261,7 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
                         nodeName = LocalizeBlackFlowNodeType(subTaskDetails?["node_type"]?.ToString());
                     }
                     var margin = subTaskDetails?["safety_margin"]?.Value<int>() ?? 0;
-                    var category = subTaskDetails?["reason_category"]?.ToString() switch
-                    {
+                    var category = subTaskDetails?["reason_category"]?.ToString() switch {
                         "mandatory_goal" => LocalizationHelper.GetString("BlackFlowReasonMandatoryGoal"),
                         "resource_reserve" => LocalizationHelper.GetString("BlackFlowReasonResourceReserve"),
                         "preferred_goal" => LocalizationHelper.GetString("BlackFlowReasonPreferredGoal"),
@@ -1202,8 +1286,7 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
 
             case "BlackFlowRoutingWarning":
                 {
-                    var warning = subTaskDetails?["code"]?.ToString() switch
-                    {
+                    var warning = subTaskDetails?["code"]?.ToString() switch {
                         "map_rebuild_failed" => LocalizationHelper.GetString("BlackFlowWarningMapRebuildFailed"),
                         "page_recovery_failed" => LocalizationHelper.GetString("BlackFlowWarningPageRecoveryFailed"),
                         "preview_cost_changed" => LocalizationHelper.GetString("BlackFlowWarningPreviewCostChanged"),
@@ -1235,6 +1318,28 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
                     Instances.TaskQueueViewModel.AddLog(
                         LocalizationHelper.GetStringFormat("BlackFlowMilestoneChanged", milestone, status),
                         UiLogColor.Info);
+                    break;
+                }
+
+            case "BlackFlowInventoryCleanup":
+                {
+                    var discardedName = subTaskDetails?["name"]?.ToString() ?? string.Empty;
+                    var (message, color) = subTaskDetails?["status"]?.ToString() switch {
+                        "started" =>
+                            (LocalizationHelper.GetString("BlackFlowInventoryCleanupStarted"), UiLogColor.Warning),
+                        "discarded" =>
+                            (LocalizationHelper.GetStringFormat("BlackFlowInventoryCleanupDiscarded", discardedName), UiLogColor.Info),
+                        "completed" =>
+                            (LocalizationHelper.GetString("BlackFlowInventoryCleanupCompleted"), UiLogColor.Success),
+                        "failed" =>
+                            (LocalizationHelper.GetString("BlackFlowInventoryCleanupFailed"), UiLogColor.Error),
+                        _ => (string.Empty, UiLogColor.Trace),
+                    };
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        Instances.TaskQueueViewModel.AddLog(message, color);
+                    }
+
                     break;
                 }
 
@@ -1362,10 +1467,19 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
                 return (null, []);
             }
 
-            bool isPallasStarter = string.Equals(
-                DataHelper.GetCharacterByNameOrAlias(roguelike.CoreChar)?.CodeName,
-                "pallas",
-                StringComparison.OrdinalIgnoreCase);
+            // 仅在此处过滤，StartingOpers 配置本体不动，重开开关/回填断点即恢复：
+            // 开关关闭时只保留第 1 顺位；顺位链条在首个空名处截断，其后残留值不传参
+            var startingOpers = (roguelike.UseAdditionalStartingOpers
+                    ? roguelike.StartingOpers
+                    : roguelike.StartingOpers.Take(1))
+                .TakeWhile(i => !string.IsNullOrEmpty(i.Name))
+                .ToList();
+
+            bool isPallasStarter = startingOpers.Any(i =>
+                string.Equals(
+                    DataHelper.GetCharacterByNameOrAlias(i.Name)?.CodeName,
+                    "pallas",
+                    StringComparison.OrdinalIgnoreCase));
             bool roguelikeSquadIsProfessional = roguelike.Mode == Mode.Collectible && roguelike.Theme != Theme.Phantom && roguelike.Squad is "突击战术分队" or "堡垒战术分队" or "远程战术分队" or "破坏战术分队";
             bool roguelikeSquadIsFoldartal = roguelike.Mode == Mode.Collectible && roguelike.Theme == Theme.Sami && roguelike.Squad == "生活至上分队";
             var task = new AsstRoguelikeTask() {
@@ -1375,8 +1489,12 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
                 Difficulty = roguelike.Difficulty,
                 Squad = roguelike.Squad,
                 Roles = roguelike.Roles,
-                CoreChar = DataHelper.GetCharacterByNameOrAlias(roguelike.CoreChar)?.Name ?? roguelike.CoreChar,
-                UseSupport = roguelike.UseSupport,
+
+                CoreCharList = [.. startingOpers.Select(i => new AsstRoguelikeCoreChar
+                    {
+                        Name = DataHelper.GetCharacterByNameOrAlias(i.Name)?.Name ?? i.Name,
+                        UseSupport = i.UseSupport,
+                    })],
                 UseSupportNonFriend = roguelike.UseSupportNonFriend,
 
                 InvestmentEnabled = roguelike.Investment,
@@ -1464,9 +1582,14 @@ public class RoguelikeSettingsUserControlModel : TaskSettingsViewModel, Roguelik
     private void RefreshLocalization()
     {
         RoguelikeThemeList.RefreshLocalization();
+        RoguelikeFindPlaytimeTargetList.RefreshLocalization();
+        RoguelikeBlackFlowCultivationTargetList.RefreshLocalization();
         UpdateRoguelikeDifficultyList();
         UpdateRoguelikeModeList();
         UpdateRoguelikeRolesList();
         UpdateRoguelikeSquadList();
+        OnPropertyChanged(nameof(RoguelikeUseSupportUnitText));
+        OnPropertyChanged(nameof(RoguelikeCoreChar2UseSupportText));
+        OnPropertyChanged(nameof(RoguelikeCoreChar3UseSupportText));
     }
 }

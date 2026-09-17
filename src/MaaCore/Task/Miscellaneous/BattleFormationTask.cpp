@@ -13,9 +13,9 @@
 #include "Task/ProcessTask.h"
 #include "Utils/Logger.hpp"
 #include "Vision/Matcher.h"
-#include "Vision/Miscellaneous/OperNameAnalyzer.h"
 #include "Vision/Miscellaneous/PipelineAnalyzer.h"
 #include "Vision/MultiMatcher.h"
+#include "Vision/Oper/OperNameAnalyzer.h"
 #include "Vision/RegionOCRer.h"
 
 asst::BattleFormationTask::BattleFormationTask(
@@ -36,7 +36,7 @@ bool asst::BattleFormationTask::set_specific_support_unit(const std::string& nam
         return false;
     }
 
-    const battle::Role role = (m_specific_support_unit.role = BattleData.get_role(name));
+    const battle::Role role = (m_specific_support_unit.role = BattleData.get_first_role(name));
     if (role == battle::Role::Unknown) {
         // 无法根据干员名称获取其职业
         Log.error(__FUNCTION__, "| Invalid specific support unit");
@@ -131,7 +131,7 @@ bool asst::BattleFormationTask::_run()
                 break;
             }
             required_opers.emplace_back(
-                RequiredOper { .role = BattleData.get_role(oper.name), .name = oper.name, .skill = oper.skill });
+                RequiredOper { .role = BattleData.get_first_role(oper.name), .name = oper.name, .skill = oper.skill });
         }
 
         // 先退出去招募助战再回来，好蠢
@@ -185,7 +185,7 @@ bool asst::BattleFormationTask::_run()
             oper.name = name;
             oper.skill = skill;
             std::vector<asst::battle::OperUsage> usage { std::move(oper) };
-            user_formation[BattleData.get_role(name)].emplace_back(name, 0, 0, std::move(usage));
+            user_formation[BattleData.get_first_role(name)].emplace_back(name, 0, 0, std::move(usage));
         }
         click_role_table(battle::Role::Unknown);
         for (auto& [role, oper_groups] : user_formation) {
@@ -685,7 +685,7 @@ bool asst::BattleFormationTask::select_opers_in_cur_page(const std::vector<OperG
             continue;
         }
 
-        if (oper->requirements.module >= 0 && oper->requirements.module <= 4) {
+        if (oper->requirements.module >= 0 && oper->requirements.module <= 5) {
             ret = ProcessTask(*this, { "BattleQuickFormationModulePage" }).run();
             ret =
                 ret &&
@@ -895,9 +895,9 @@ bool asst::BattleFormationTask::parse_formation()
 
         // 判断干员/干员组的职业，放进对应的分组
         bool same_role = true;
-        battle::Role role = BattleData.get_role(opers_vec.front().name);
+        battle::Role role = BattleData.get_first_role(opers_vec.front().name);
         for (const auto& oper : opers_vec) {
-            same_role &= BattleData.get_role(oper.name) == role;
+            same_role &= BattleData.get_first_role(oper.name) == role;
 
             // （仅一次）如果发现这名助战干员，则将其技能设定为对应的所需技能
             if (oper.name == m_specific_support_unit.name && m_specific_support_unit.skill == 0) {
@@ -1011,7 +1011,7 @@ std::optional<asst::battle::OperNameTag> asst::BattleFormationTask::add_support_
     if (required_opers.empty()) { // 随机模式
         for (size_t refresh_times = 0; refresh_times <= max_refresh_times && !need_exit(); ++refresh_times) {
             if (auto opt = add_support_unit_from_support_list(support_list, required_opers, friendship)) {
-                return battle::OperNameTag { BattleData.get_role(*opt), *opt };
+                return battle::OperNameTag { BattleData.get_first_role(*opt), *opt };
             }
             if (refresh_times < max_refresh_times) {
                 support_list.refresh_list();
@@ -1090,7 +1090,7 @@ std::optional<std::string> asst::BattleFormationTask::add_support_unit_from_supp
 
     for (const RequiredOper& required_oper : required_opers) {
         auto it = std::ranges::find_if(support_units, [friendship, &required_oper](const SupportUnit& support_unit) {
-            return support_unit.name == battle::canonical_oper_name(required_oper.role, required_oper.name) &&
+            return support_unit.role == required_oper.role && support_unit.name == required_oper.name &&
                    (support_unit.elite > required_oper.elite ||
                     (support_unit.elite == required_oper.elite && support_unit.level >= required_oper.level)) &&
                    support_unit.potential >= required_oper.potential &&
