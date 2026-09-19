@@ -29,10 +29,13 @@ public:
     void set_multi_copilot_config(std::vector<MultiCopilotConfig> config) { m_copilot_configs = std::move(config); }
 
     void set_battle_task_ptr(const std::shared_ptr<BattleProcessTask>& ptr) { m_battle_task_ptr = ptr; }
+
     void set_cycle_tasks(const std::vector<std::shared_ptr<AbstractTask>>& tasks);
+
     void set_switch_copilot_on_failure(bool value) { m_switch_copilot_on_failure = value; }
 
     bool has_pending_config() const { return m_index_current < static_cast<int>(m_copilot_configs.size()); }
+
     bool was_abandoned_for_leak() const;
     const std::string& current_stage_name() const;
     bool complete_current_battle(bool three_stars);
@@ -49,8 +52,8 @@ private:
         const cv::Mat& image,
         std::tuple<int, int, int> threshold_low,
         std::tuple<int, int, int> threshold_high);
-    static std::pair<std::tuple<int, int, int>, std::tuple<int, int, int>> get_stage_thresholds(
-        const std::string& stage_name);
+    static std::pair<std::tuple<int, int, int>, std::tuple<int, int, int>>
+        get_stage_thresholds(const std::string& stage_name);
     bool is_stage_detail_opened(const cv::Mat& image); // 检查关卡介绍是否已展开
     bool confirm_stage_name(const cv::Mat& image, const std::string& stage_name);
 
@@ -58,6 +61,7 @@ private:
     int m_index_current = 0; // 当前执行的索引
     int m_current_retry = 0;
     std::optional<int> m_current_chapter;
+    std::optional<int> m_current_raid_chapter;
     std::optional<std::string> m_current_resource_line;
     bool m_switch_copilot_on_failure = false;
     std::shared_ptr<BattleProcessTask> m_battle_task_ptr = nullptr;
