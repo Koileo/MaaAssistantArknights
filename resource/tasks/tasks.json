@@ -705,6 +705,7 @@
             ["^预备干员-狙[^\\n]*", "预备干员-狙击"],
             ["^预备干员-重[^\\n]*", "预备干员-重装"],
             ["^折光[^\\n]*", "折光"],
+            ["^折桠[^\\n]*", "折桠"],
             ["^红集$", "红隼"],
             ["小.?满", "小满"],
             [".*夹子[^\\n]*", "“夹子”"],
@@ -1447,7 +1448,17 @@
     "PRTS": {
         "algorithm": "JustReturn",
         "postDelay": 5000,
-        "next": ["PRTS1", "PRTS2", "PRTS3", "EndOfAction", "CheckLevelUp", "CheckLevelUpOcr", "PrtsErrorConfirm", "FightMissionFailed", "WaitAfterPRTS"]
+        "next": [
+            "PRTS1",
+            "PRTS2",
+            "PRTS3",
+            "EndOfAction",
+            "CheckLevelUp",
+            "CheckLevelUpOcr",
+            "PrtsErrorConfirm",
+            "FightMissionFailed",
+            "WaitAfterPRTS"
+        ]
     },
     "PRTS1": {
         "template": "BattleOfficiallyBegin.png",
@@ -5171,10 +5182,66 @@
         "action": "Stop"
     },
     "OperBoxSlowlySwipeToTheRight": {
-        "doc": "6个横向干员防止识别不全990px",
+        "doc": "每次前进约4列，并保留足够重叠防止惯性跳过整列干员",
         "baseTask": "SlowlySwipeToTheRight",
-        "specificRect": [1090, 350, 20, 20],
-        "rectMove": [100, 350, 20, 20]
+        "specificRect": [1000, 350, 20, 20],
+        "rectMove": [400, 350, 20, 20]
+    },
+    "OperBoxSwipeToTheLeft": {
+        "baseTask": "SwipeToTheLeft",
+        "specificRect": [100, 350, 20, 20],
+        "rectMove": [1090, 350, 20, 20]
+    },
+    "OperBoxResetByRarity": {
+        "algorithm": "OcrDetect",
+        "action": "ClickSelf",
+        "text": ["稀有度"],
+        "roi": [880, 0, 145, 90],
+        "postDelay": 500
+    },
+    "OperBoxSelectParadox": {
+        "algorithm": "OcrDetect",
+        "action": "ClickSelf",
+        "text": ["悖论模拟"],
+        "roi": [970, 70, 310, 150],
+        "postDelay": 500,
+        "next": ["OperBoxParadoxSelected", "OperBoxCloseParadoxMenu"]
+    },
+    "OperBoxParadoxSelected": {
+        "algorithm": "OcrDetect",
+        "action": "DoNothing",
+        "text": ["悖论模拟"],
+        "roi": [1024, 0, 90, 65],
+        "postDelay": 500
+    },
+    "OperBoxParadoxSortMenu": {
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "doc": "PlayCover 以 1280x720 逻辑坐标运行，悖论排序箭头位于筛选面板右上角",
+        "specificRect": [1215, 67, 30, 30],
+        "postDelay": 800
+    },
+    "OperBoxParadoxSortUnfinished": {
+        "algorithm": "OcrDetect",
+        "action": "ClickSelf",
+        "text": ["未通过", "优先未通过", "未完成", "优先未完成"],
+        "roi": [850, 20, 430, 300],
+        "postDelay": 500,
+        "next": ["OperBoxCloseParadoxMenu"]
+    },
+    "OperBoxCloseParadoxMenu": {
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [650, 30, 30, 30],
+        "postDelay": 500,
+        "next": ["OperBoxParadoxSelected"]
+    },
+    "OperBoxOpenParadoxMenu": {
+        "algorithm": "JustReturn",
+        "action": "ClickRect",
+        "specificRect": [1110, 15, 48, 50],
+        "postDelay": 500,
+        "next": ["OperBoxSelectParadox"]
     },
     "OperBoxFlagRoleTopROI": {
         "template": "empty.png",
@@ -5222,6 +5289,19 @@
         "rectMove": [0, 265, 128, 22],
         "specialParams": [160, 4, 0, 0, 3, 10]
     },
+    "OperBoxParadoxCompletedOCR": {
+        "algorithm": "OcrDetect",
+        "action": "DoNothing",
+        "text": ["已通过", "未通过", "未解锁", "暂无数据"],
+        "fullMatch": true,
+        "roi": [20, 258, 65, 32]
+    },
+    "ParadoxDetailOperatorNameOCR": {
+        "baseTask": "CharsNameOcrReplace",
+        "text": [],
+        "roi": [0, 520, 520, 180],
+        "specialParams": [160, 4, 0, 0, 3, 10]
+    },
     "OperBoxLevelOCR": {
         "algorithm": "OcrDetect",
         "fullMatch": true,
@@ -5229,11 +5309,25 @@
         "text": [],
         "roi": [5, 230, 37, 23]
     },
+    "ParadoxSortByRarity": {
+        "algorithm": "OcrDetect",
+        "action": "ClickSelf",
+        "text": ["稀有度"],
+        "roi": [880, 0, 145, 90],
+        "postDelay": 500
+    },
     "OperParadoxBegin": {
         "algorithm": "JustReturn",
         "next": ["OperOpenInformationMenu"],
         "preDelay": 500,
         "postDelay": 500
+    },
+    "ParadoxStartSimulation": {
+        "algorithm": "OcrDetect",
+        "action": "ClickSelf",
+        "text": ["开始模拟", "开始模拟作战", "可开始模拟作战"],
+        "roi": [980, 560, 300, 160],
+        "postDelay": 1000
     },
     "OperOpenInformationMenu": {
         "action": "ClickSelf",
@@ -5249,6 +5343,12 @@
         "roi": [904, 526, 249, 172],
         "preDelay": 500,
         "postDelay": 500
+    },
+    "ParadoxAlreadyCompleted": {
+        "algorithm": "OcrDetect",
+        "action": "DoNothing",
+        "text": ["已完成模拟作战"],
+        "roi": [0, 620, 320, 100]
     },
     "OperOpenParadoxChooseSkill": {
         "action": "ClickSelf",
@@ -5336,11 +5436,12 @@
         "withoutDet": true,
         "useRaw": false,
         "binThreshold": [180, 255],
-        "roi": [33, 272, 85, 36],
+        "roi": [0, 272, 120, 36],
         "ocrReplace": [
             ["Lt", "LT"],
             ["LT(?=\\d)", "LT-"],
-            ["LT[^\\d]{0,3}(?=\\d)", "LT-"]
+            ["LT[^\\d]{0,3}(?=\\d)", "LT-"],
+            ["^T-2$", "LT-2"]
         ]
     },
     "SSSCloseTip": {

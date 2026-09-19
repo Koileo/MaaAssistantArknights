@@ -9,6 +9,7 @@
 #include "Vision/BestMatcher.h"
 #include "Vision/Matcher.h"
 #include "Vision/MultiMatcher.h"
+#include "Vision/OCRer.h"
 #include "Vision/Oper/OperNameAnalyzer.h"
 #include "Vision/RegionOCRer.h"
 #include "Vision/TemplDetOCRer.h"
@@ -39,6 +40,10 @@ bool asst::OperBoxImageAnalyzer::analyzer_oper_box()
 {
     LogTraceFunction;
 
+    if (m_paradox_filter) {
+        return paradox_cards_analyze();
+    }
+
     if (!opers_analyze()) {
         return false;
     }
@@ -58,6 +63,46 @@ bool asst::OperBoxImageAnalyzer::analyzer_oper_box()
     return !m_result.empty();
 }
 
+bool asst::OperBoxImageAnalyzer::paradox_cards_analyze()
+{
+    std::vector<MatchRect> flags;
+    for (int role = 1; role <= 9; ++role) {
+        for (const auto& roi_task : { "OperBoxFlagRoleTopROI", "OperBoxFlagRoleBottomROI" }) {
+            MultiMatcher matcher(m_image);
+            matcher.set_task_info("OperBoxFlagRole" + std::to_string(role));
+            matcher.set_roi(Task.get(roi_task)->roi);
+            if (const auto result = matcher.analyze()) {
+                for (const auto& flag : *result) {
+                    // Partial cards will be covered by the next overlapping page.
+                    if (flag.rect.x >= 0 && flag.rect.x + 128 <= 1145) {
+                        flags.emplace_back(flag);
+                    }
+                }
+            }
+        }
+    }
+    flags = NMS(std::move(flags));
+    sort_by_horizontal_(flags);
+    for (const auto& flag : flags) {
+        OCRer status(m_image);
+        status.set_task_info("OperBoxParadoxCompletedOCR");
+        status.set_roi(flag.rect.move(Task.get("OperBoxParadoxCompletedOCR")->roi));
+        const auto result = status.analyze();
+        if (!result || result->size() != 1) {
+            return false;
+        }
+        const auto& text = result->front().text;
+        OperBoxInfo box;
+        box.rect = flag.rect;
+        box.own = true;
+        box.paradox_completed = text == "已通过";
+        box.paradox_unlocked = text == "已通过" || text == "未通过";
+        // Identity is deliberately empty here: the status strip covers it.
+        m_result.emplace_back(std::move(box));
+    }
+    return !m_result.empty();
+}
+
 bool asst::OperBoxImageAnalyzer::opers_analyze()
 {
     struct OperResult
@@ -68,6 +113,8 @@ bool asst::OperBoxImageAnalyzer::opers_analyze()
         Rect flag_rect;
         double flag_score;
         battle::Role role;
+        bool paradox_status_found = false;
+        bool paradox_completed = false;
     };
 
     const auto& name_task = Task.get("OperBoxNameOCR");
@@ -84,6 +131,30 @@ bool asst::OperBoxImageAnalyzer::opers_analyze()
         }
         std::vector<OperResult> list;
         for (const auto& flag : matcher.get_result()) {
+            bool paradox_status_found = false;
+            bool paradox_completed = false;
+            if (m_paradox_filter) {
+                const auto& status_task = Task.get("OperBoxParadoxCompletedOCR");
+                OCRer status_analyzer(m_image);
+                status_analyzer.set_task_info(status_task);
+                status_analyzer.set_roi(flag.rect.move(status_task->roi));
+                if (const auto status_result = status_analyzer.analyze(); status_result && !status_result->empty()) {
+                    for (const auto& item : *status_result) {
+                        const bool passed = item.text.find("已通过") != std::string::npos;
+                        const bool not_passed = item.text.find("未通过") != std::string::npos;
+                        if (passed || not_passed) {
+                            paradox_status_found = true;
+                            paradox_completed = paradox_completed || passed;
+                        }
+                    }
+                }
+                // The paradox filter can briefly show ordinary cards while
+                // the list is being refreshed.  Those cards have “暂无数据”
+                // and must not be mistaken for paradox entries.
+                if (!paradox_status_found) {
+                    continue;
+                }
+            }
             OperNameAnalyzer name_analyzer(m_image);
             name_analyzer.set_task_info(name_task);
             name_analyzer.set_required(std::vector(all_opers.begin(), all_opers.end()));
@@ -95,7 +166,8 @@ bool asst::OperBoxImageAnalyzer::opers_analyze()
             name_analyzer.set_width_threshold(params[5]);
             [[maybe_unused]] cv::Mat debug_img = make_roi(m_image, flag.rect.move(name_task->rect_move));
             if (auto ocr_opt = name_analyzer.analyze()) {
-                OperResult ocr { ocr_opt->rect, ocr_opt->score, std::move(ocr_opt->text), flag.rect, flag.score, role };
+                OperResult ocr { ocr_opt->rect, ocr_opt->score, std::move(ocr_opt->text), flag.rect,
+                                 flag.score,    role,           paradox_status_found,     paradox_completed };
                 list.emplace_back(std::move(ocr));
             }
             else {
@@ -164,6 +236,22 @@ bool asst::OperBoxImageAnalyzer::opers_analyze()
 
         box.rect = flag_rect;
         box.own = true;
+
+        // In paradox mode the status was detected before name OCR.  Keep a
+        // second defensive read for callers that construct the analyzer
+        // without the mode flag.
+        if (m_paradox_filter) {
+            box.paradox_completed = oper.paradox_completed;
+        }
+        else {
+            const auto& completed_task = Task.get("OperBoxParadoxCompletedOCR");
+            OCRer completed_analyzer(m_image);
+            completed_analyzer.set_task_info(completed_task);
+            completed_analyzer.set_roi(flag_rect.move(completed_task->roi));
+            if (const auto result = completed_analyzer.analyze(); result && !result->empty()) {
+                box.paradox_completed = result->front().text.find("已通过") != std::string::npos;
+            }
+        }
 
 #ifdef ASST_DEBUG
         cv::rectangle(m_image_draw, make_rect<cv::Rect>(flag_rect), cv::Scalar(0, 255, 0), 1);
